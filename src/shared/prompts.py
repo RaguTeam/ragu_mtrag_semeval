@@ -25,3 +25,5 @@ ANSWER_QUESTION = (
     "Use only the provided documents.\n"
     "If the information is insufficient, explicitly say so."
 )
+
+DOCUMENT_TEMPLATE = "\n\n[Документ]\n{content}"

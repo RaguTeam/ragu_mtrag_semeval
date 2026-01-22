@@ -4,6 +4,7 @@ from datetime import date
 
 from src.client.openai_compatible import LLM
 from src.shared.prompts import COREFERENCE_RESOLUTION
+from src.shared.schemas import ExtendedConversation, ExtendedMessage, OpenAIConversation, OpenAIMessage
 
 
 class CoreferenceAgent:
@@ -13,7 +14,7 @@ class CoreferenceAgent:
         """Initialize the CoreferenceAgent."""
         self.llm = llm
 
-    def resolve(self, conversation: list[dict]) -> list[dict]:
+    def resolve(self, conversation: ExtendedConversation) -> ExtendedConversation:
         """Resolve coreferences in document messages within the conversation.
 
         Args:
@@ -27,25 +28,18 @@ class CoreferenceAgent:
 
         resolved_docs = []
 
-        for message in conversation:
-            prompt = [
-                {
-                    "role": "system",
-                    "content": COREFERENCE_RESOLUTION.format(date=today),
-                },
-                {
-                    "role": "user",
-                    "content": message["content"],
-                },
-            ]
+        for message in conversation.messages:
+            prompt = OpenAIConversation(
+                [
+                    OpenAIMessage("system", COREFERENCE_RESOLUTION.format(date=today)),
+                    OpenAIMessage("user", message.content),
+                ],
+            )
 
             resolved_text = self.llm.generate(prompt)
 
             resolved_docs.append(
-                {
-                    "role": message["role"],
-                    "content": resolved_text.strip(),
-                },
+                ExtendedMessage(message.role, resolved_text.strip()),
             )
 
-        return resolved_docs
+        return ExtendedConversation(resolved_docs)

@@ -2,13 +2,16 @@
 
 from src.client.openai_compatible import LLM
 from src.generation.assembly import MultiAgentQA
+from src.shared.schemas import ExtendedConversation, ExtendedMessage
 
 if __name__ == "__main__":
-    conversation = [
-        {"role": "user", "content": "Что произошло в прошлом году?"},
-        {"role": "document", "content": "Компания отчиталась о рекордной прибыли в 2023 году."},
-        {"role": "document", "content": "В прошлом году был принят новый закон."},
-    ]
+    conversation = ExtendedConversation(
+        [
+            ExtendedMessage("user", "Что произошло в прошлом году?"),
+            ExtendedMessage("document", "Компания отчиталась о рекордной прибыли в 2023 году."),
+            ExtendedMessage("document", "В прошлом году был принят новый закон."),
+        ],
+    )
 
     host = "http://localhost:8000/v1"
     api_key = "testkey"
