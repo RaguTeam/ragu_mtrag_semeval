@@ -1,0 +1,59 @@
+[project]
+name = "ragu-mtrag-eval-2026"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "openai>=2.15.0",
+    "pre-commit>=4.5.1",
+]
+
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+  "I",    # isort
+  "E",    # pycodestyle
+  "W",    # pycodestyle
+  "F",    # pyflakes
+  "N",    # pep8-naming
+  "D",    # pydocstyle
+  "PL",   # pylint
+  "S",    # flake8-bandit
+  "Q",    # flake8-quotes
+  "B",    # flake8-bugbear
+  "SIM",  # flake8-simplify
+  "UP",   # pyupgrade
+  "ANN",  # annotations
+]
+ignore = [
+  "D105",     # undocumented-magic-method
+  "S501",     # no ssl verification
+  "PLR0913"   # too many arguments
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["D104"]  # undocumented-public-package
+"**/{tests}/*" = [
+  "S101",     # allow-assert
+  "PLR2004",  # magic-value-comparison
+  "E731",     # lambda-assignment
+  "D100",     # undocumented-public-module
+  "D101",     # undocumented-public-class
+  "D102",     # undocumented-public-method
+  "D103",     # undocumented-public-function
+  "D104",     # undocumented-public-package
+]
+
+[tool.ruff.lint.isort]
+force-single-line = false
+
+[tool.yamlfix]
+line_length = 120
+explicit_start = false
+sequence_style = "keep_style"
+whitelines = 1
+section_whitelines = 1
