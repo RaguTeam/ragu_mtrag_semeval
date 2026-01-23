@@ -3,8 +3,8 @@
 from datetime import date
 
 from src.client.openai_compatible import LLM
-from src.shared.prompts import ANSWER_QUESTION, DOCUMENT_TEMPLATE
-from src.shared.schemas import ExtendedConversation, ExtendedMessage, OpenAIConversation, OpenAIMessage
+from src.shared.prompts import ANSWER_QUESTION
+from src.shared.schemas import ExtendedConversation, OpenAIConversation, OpenAIMessage, extended_to_openai
 
 
 class AnswerAgent:
@@ -13,66 +13,6 @@ class AnswerAgent:
     def __init__(self, llm: LLM) -> None:
         """Initialize the AnswerAgent."""
         self.llm = llm
-
-    def extended_to_openai(
-        self,
-        messages: list[ExtendedMessage],
-    ) -> list[OpenAIMessage]:
-        """Convert ExtendedConversation messages to OpenAIConversation format.
-
-        Args:
-            messages: List of ExtendedMessage instances.
-
-        Returns:
-            list[OpenAIMessage]: Converted list of OpenAIMessage instances.
-
-        """
-        openai_messages: list[OpenAIMessage] = []
-
-        pending_user: OpenAIMessage | None = None
-
-        for msg in messages:
-            if msg.role == "user":
-                if pending_user is not None:
-                    openai_messages.append(pending_user)
-
-                pending_user = OpenAIMessage(
-                    role="user",
-                    content=msg.content,
-                )
-
-            elif msg.role == "document":
-                if pending_user is None:
-                    raise ValueError(
-                        "Document message encountered without preceding user message",
-                    )
-
-                pending_user = OpenAIMessage(
-                    role="user",
-                    content=pending_user.content + DOCUMENT_TEMPLATE.format(content=msg.content),
-                )
-
-            elif msg.role == "assistant":
-                if pending_user is not None:
-                    openai_messages.append(pending_user)
-                    pending_user = None
-
-                openai_messages.append(
-                    OpenAIMessage(role="assistant", content=msg.content),
-                )
-
-            elif msg.role == "system":
-                openai_messages.append(
-                    OpenAIMessage(role="system", content=msg.content),
-                )
-
-            else:
-                raise ValueError(f"Unsupported role: {msg.role}")
-
-        if pending_user is not None:
-            openai_messages.append(pending_user)
-
-        return openai_messages
 
     def answer(self, conversation: ExtendedConversation) -> str:
         """Generate the final answer based on the conversation.
@@ -86,7 +26,7 @@ class AnswerAgent:
         """
         today = date.today().isoformat()
 
-        openai_conversation = self.extended_to_openai(conversation.messages)
+        openai_conversation = extended_to_openai(conversation.messages)
 
         prompt = OpenAIConversation(
             [

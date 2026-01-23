@@ -4,13 +4,15 @@ COREFERENCE_RESOLUTION = (
     "You are a coreference resolution agent.\n"
     "Today's date is {date}.\n\n"
     "Your task:\n"
-    "- Resolve all coreferences in the document.\n"
-    "- Replace relative temporal expressions (e.g. "
+    "Replace relative temporal expressions (e.g. "
     "'last year', 'this year', 'recently', 'now') with "
     "explicit calendar dates or years relative to today's date.\n"
-    "- Resolve pronouns and vague references ('he', 'it', "
-    "'this law', 'the company') using the dialogue context.\n"
-    "- Output ONLY the rewritten document text, without explanations."
+    "Deduse mentions like 'he', 'she', 'they', 'the company', etc. from the context of the conversation.\n\n"
+    "Rewrite the last user message with all coreferences and temporal expressions resolved.\n"
+    "Do not answer the question, just rewrite it.\n"
+    "Message to rewrite:\n"
+    "{message}\n\n"
+    "Message with resolved coreferences:"
 )
 
 RELEVANCE_FILTERING = (
