@@ -7,6 +7,7 @@ from src.agents.coreference import CoreferenceAgent
 from src.agents.doc_review import RelevanceAgent
 from src.client.openai_compatible import LLM
 from src.shared.logging_config import setup_logging
+from src.shared.schemas import ExtendedConversation
 
 setup_logging(
     log_level="INFO",
@@ -32,7 +33,7 @@ class MultiAgentQA:
         self.relevance_agent = RelevanceAgent(llm)
         self.answer_agent = AnswerAgent(llm)
 
-    def run(self, conversation: list[dict]) -> str:
+    def run(self, conversation: ExtendedConversation) -> str:
         """Run the multi-agent QA pipeline.
 
         Args:

@@ -3,7 +3,8 @@
 from datetime import date
 
 from src.client.openai_compatible import LLM
-from src.shared.prompts import ANSWER_QUESTION
+from src.shared.prompts import ANSWER_QUESTION, DOCUMENT_TEMPLATE
+from src.shared.schemas import ExtendedConversation, ExtendedMessage, OpenAIConversation, OpenAIMessage
 
 
 class AnswerAgent:
@@ -13,7 +14,67 @@ class AnswerAgent:
         """Initialize the AnswerAgent."""
         self.llm = llm
 
-    def answer(self, conversation: list[dict]) -> str:
+    def extended_to_openai(
+        self,
+        messages: list[ExtendedMessage],
+    ) -> list[OpenAIMessage]:
+        """Convert ExtendedConversation messages to OpenAIConversation format.
+
+        Args:
+            messages: List of ExtendedMessage instances.
+
+        Returns:
+            list[OpenAIMessage]: Converted list of OpenAIMessage instances.
+
+        """
+        openai_messages: list[OpenAIMessage] = []
+
+        pending_user: OpenAIMessage | None = None
+
+        for msg in messages:
+            if msg.role == "user":
+                if pending_user is not None:
+                    openai_messages.append(pending_user)
+
+                pending_user = OpenAIMessage(
+                    role="user",
+                    content=msg.content,
+                )
+
+            elif msg.role == "document":
+                if pending_user is None:
+                    raise ValueError(
+                        "Document message encountered without preceding user message",
+                    )
+
+                pending_user = OpenAIMessage(
+                    role="user",
+                    content=pending_user.content + DOCUMENT_TEMPLATE.format(content=msg.content),
+                )
+
+            elif msg.role == "assistant":
+                if pending_user is not None:
+                    openai_messages.append(pending_user)
+                    pending_user = None
+
+                openai_messages.append(
+                    OpenAIMessage(role="assistant", content=msg.content),
+                )
+
+            elif msg.role == "system":
+                openai_messages.append(
+                    OpenAIMessage(role="system", content=msg.content),
+                )
+
+            else:
+                raise ValueError(f"Unsupported role: {msg.role}")
+
+        if pending_user is not None:
+            openai_messages.append(pending_user)
+
+        return openai_messages
+
+    def answer(self, conversation: ExtendedConversation) -> str:
         """Generate the final answer based on the conversation.
 
         Args:
@@ -25,31 +86,13 @@ class AnswerAgent:
         """
         today = date.today().isoformat()
 
-        documents = [m["content"] for m in conversation if m["role"] == "document"]
+        openai_conversation = self.extended_to_openai(conversation.messages)
 
-        last_user_idx = max(i for i, m in enumerate(conversation) if m["role"] == "user")
-        last_user_message = conversation[last_user_idx]["content"]
-
-        documents_block = ""
-        if documents:
-            documents_block = "\n\nRelevant documents:\n" + "\n".join(
-                f"[Document {i + 1}] {doc}" for i, doc in enumerate(documents)
-            )
-
-        augmented_user_content = (
-            f"{last_user_message}{documents_block}\n\nAnswer the question using only the documents above."
+        prompt = OpenAIConversation(
+            [
+                OpenAIMessage("system", ANSWER_QUESTION.format(date=today)),
+            ]
+            + openai_conversation,
         )
-
-        prompt = [
-            {
-                "role": "system",
-                "content": ANSWER_QUESTION.format(date=today),
-            },
-            *[m for i, m in enumerate(conversation) if m["role"] != "document" and i < last_user_idx],
-            {
-                "role": "user",
-                "content": augmented_user_content,
-            },
-        ]
 
         return self.llm.generate(prompt)

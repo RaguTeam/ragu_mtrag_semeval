@@ -2,6 +2,8 @@
 
 from openai import OpenAI
 
+from src.shared.schemas import OpenAIConversation
+
 
 class LLM:
     """Simple OpenAI-compatible LLM client.
@@ -43,7 +45,7 @@ class LLM:
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-    def generate(self, messages: list[dict], response_format: dict | None = None) -> str:
+    def generate(self, messages: OpenAIConversation, response_format: dict | None = None) -> str:
         """Generate a completion from OpenAI-style messages.
 
         Args:
@@ -56,7 +58,7 @@ class LLM:
         """
         response = self.client.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=messages.to_openai(),
             temperature=self.temperature,
             max_tokens=self.max_tokens,
             extra_body={
