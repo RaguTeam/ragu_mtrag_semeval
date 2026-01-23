@@ -1,5 +1,7 @@
 """OpenAI-compatible LLM client."""
 
+import re
+
 from openai import OpenAI
 
 from src.shared.schemas import OpenAIConversation
@@ -45,12 +47,13 @@ class LLM:
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-    def generate(self, messages: OpenAIConversation, response_format: dict | None = None) -> str:
+    def generate(self, messages: OpenAIConversation, response_format: dict | None = None, think: bool = True) -> str:
         """Generate a completion from OpenAI-style messages.
 
         Args:
             messages: List of message dicts with 'role' and 'content' keys
             response_format: Optional response format specification
+            think: Whether to enable the model's "thinking" capability
 
         Returns:
             str: Generated text from the model
@@ -63,13 +66,21 @@ class LLM:
             max_tokens=self.max_tokens,
             extra_body={
                 "chat_template_kwargs": {
-                    "enable_thinking": False,
+                    "enable_thinking": think,
                 },
             },
             response_format=response_format,
         )
 
-        return response.choices[0].message.content.strip()
+        raw_text = response.choices[0].message.content or ""
+        return self._strip_thinking(raw_text)
+
+    def _strip_thinking(self, text: str) -> str:
+        """Удаляет блоки <think>...</think> и возвращает финальный ответ модели."""
+        # Удаляем все think-блоки (на случай, если их несколько)
+        cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+
+        return cleaned.strip()
 
 
 if __name__ == "__main__":
