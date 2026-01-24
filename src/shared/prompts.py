@@ -10,9 +10,6 @@ COREFERENCE_RESOLUTION = (
     "Deduse mentions like 'he', 'she', 'they', 'the company', etc. from the context of the conversation.\n\n"
     "Rewrite the last user message with all coreferences and temporal expressions resolved.\n"
     "Do not answer the question, just rewrite it.\n"
-    "Message to rewrite:\n"
-    "{message}\n\n"
-    "Message with resolved coreferences:"
 )
 
 RELEVANCE_FILTERING = (

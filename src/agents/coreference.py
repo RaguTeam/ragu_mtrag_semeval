@@ -3,6 +3,7 @@
 from datetime import date
 
 from src.client.openai_compatible import LLM
+from src.shared.conversations import COREFERENCE_EXAMPLE
 from src.shared.prompts import COREFERENCE_RESOLUTION
 from src.shared.schemas import (
     ExtendedConversation,
@@ -34,17 +35,22 @@ class CoreferenceAgent:
 
         user_mess_id = max(i for i, msg in enumerate(conversation.messages) if msg.role == "user")
 
-        until_last_query = conversation.messages[:user_mess_id]
-        ready_to_llm = extended_to_openai(until_last_query)
+        until_last_query = conversation.messages[: user_mess_id + 1]
+
+        user_message_contents = str(OpenAIConversation(extended_to_openai(until_last_query)).to_openai())
+        ready_to_llm = [
+            OpenAIMessage("user", user_message_contents),
+        ]
 
         prompt = OpenAIConversation(
-            ready_to_llm
-            + [
+            [
                 OpenAIMessage(
                     "system",
-                    COREFERENCE_RESOLUTION.format(date=today, message=conversation.messages[user_mess_id].content),
+                    COREFERENCE_RESOLUTION.format(date=today),
                 ),
-            ],
+            ]
+            + COREFERENCE_EXAMPLE
+            + ready_to_llm,
         )
 
         resolved_text = self.llm.generate(prompt)

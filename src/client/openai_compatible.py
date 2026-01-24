@@ -47,7 +47,7 @@ class LLM:
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-    def generate(self, messages: OpenAIConversation, response_format: dict | None = None, think: bool = True) -> str:
+    def generate(self, messages: OpenAIConversation, response_format: dict | None = None, think: bool = False) -> str:
         """Generate a completion from OpenAI-style messages.
 
         Args:
