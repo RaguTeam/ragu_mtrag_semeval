@@ -53,11 +53,15 @@ Then you can use next instruction https://github.com/IBM/mt-rag-benchmark/blob/m
 
 example of checking the format:
 ```
-python mt-rag-benchmark/scripts/evaluation/format_checker.py --input_file data/reference_small.jsonl --prediction_file qwen34b_preds_small.jsonl --mode generation_taskb
+python mt-rag-benchmark/scripts/evaluation/format_checker.py --input_file <REFERENCE_DATA_JSONL> --prediction_file <PREDICTIONS_FILE_JSONL --mode generation_taskb
 ```
 
 example of evaluation run:
 ```
-python mt-rag-benchmark/scripts/evaluation/run_generation_eval.py -i qwen34b_preds_small.jsonl -o ./judge_small.jsonl -e mt-rag-benchmark/scripts/evaluation/config.yaml --provider vllm --judge_model Qwen/Qwen3-4B
+python mt-rag-benchmark/scripts/evaluation/run_generation_eval.py -i <PREDICTIONS_FILE_JSONL> -o <EVALUATION_RESULTS_JSONL> -e mt-rag-benchmark/scripts/evaluation/config.yaml --provider vllm --judge_model Qwen/Qwen3-4B
 ```
 by default they have hardcoded port 8001 for vllm
+
+To aggregate metrics and calculate harmonic mean between them you can run next script: 
+```
+python scripts/evaluation/metrics_aggregation.py --input <EVALUATION_RESULTS_JSONL>
