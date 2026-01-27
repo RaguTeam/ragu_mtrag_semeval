@@ -30,7 +30,7 @@ class MultiAgentQA:
 
         """
         self.coref_agent = CoreferenceAgent(llm)
-        self.relevance_agent = RelevanceAgent(llm)
+        # self.relevance_agent = RelevanceAgent(llm)
         self.answer_agent = AnswerAgent(llm)
 
     def run(self, conversation: ExtendedConversation) -> str:
@@ -51,8 +51,8 @@ class MultiAgentQA:
         logger.info("After coreference resolution: %s", conversation)
 
         # 2. Relevance filtering
-        conversation = self.relevance_agent.filter(conversation)
-        logger.info("After relevance filtering: %s", conversation)
+        # conversation = self.relevance_agent.filter(conversation)
+        # logger.info("After relevance filtering: %s", conversation)
 
         # 3. Final answer
         answer = self.answer_agent.answer(conversation)
