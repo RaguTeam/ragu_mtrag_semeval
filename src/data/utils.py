@@ -448,7 +448,7 @@ def load_conversations(path: str | Path) -> list[Conversation]:
     """
     return [
         conversation_from_json(sample)
-        for sample in json.loads(Path('mt-rag-benchmark/human/conversations/conversations.json').read_text())
+        for sample in json.loads(Path(path).read_text())
     ]
 
 
