@@ -4,7 +4,7 @@ from pathlib import Path
 from collections import defaultdict
 import re
 
-from src.data import (
+from src.data.utils import (
     GenerationTask,
     load_corpus_document_level,
     load_corpus_passage_level,

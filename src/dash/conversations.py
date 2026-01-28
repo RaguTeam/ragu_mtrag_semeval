@@ -5,7 +5,7 @@ import json
 from dataclasses import asdict
 from typing import List
 
-from ..data import Conversation, UserMessage, AgentMessage
+from ..data.utils import Conversation, UserMessage, AgentMessage
 
 def run_dashboard(conversations: List[Conversation]):
     """

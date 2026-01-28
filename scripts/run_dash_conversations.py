@@ -1,4 +1,4 @@
-from src.data import load_generation_tasks
+from src.data.utils import load_generation_tasks
 from src.dash.generation_task import run_dashboard
 
 

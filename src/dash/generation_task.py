@@ -6,7 +6,7 @@ import json
 from typing import List, Dict
 
 # Assuming the import path provided in the prompt
-from ..data import GenerationTask, GenerationTaskMessage, AgentMessageContext
+from ..data.utils import GenerationTask, GenerationTaskMessage, AgentMessageContext
 
 
 def run_dashboard(generation_tasks: List[GenerationTask]):
