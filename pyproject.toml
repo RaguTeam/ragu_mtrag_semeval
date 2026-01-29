@@ -28,13 +28,15 @@ eval = [
     "langchain==0.2.17",
     "langchain-community==0.2.19",
     "bitsandbytes==0.47.0",
-    # "flash_attn==2.8.3",  # too long to build
     "pydantic==2.11.7",
     "vllm==0.10.2",
+
+    # "flash_attn==2.8.3",
+    # too long to build; needs also:
+    # [tool.uv.extra-build-dependencies]
+    # flash-attn = ["torch"]
 ]
 
-[tool.uv.extra-build-dependencies]
-flash-attn = ["torch"]
 
 [tool.ruff]
 line-length = 120
