@@ -1,5 +1,13 @@
 """Conversations list."""
 
+import textwrap
+from openai.types.chat import (
+    ChatCompletionSystemMessageParam,
+    ChatCompletionDeveloperMessageParam,
+    ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam,
+)
+
 from src.shared.schemas import ExtendedConversation, ExtendedMessage, OpenAIMessage
 
 COREFERENCE_EXAMPLE = [
@@ -42,3 +50,30 @@ EXAMPLE_CONVERSATION = ExtendedConversation(
         ExtendedMessage("document", "Чарли Чаплин родился 16 апреля 1889 года в Лондоне."),
     ],
 )
+
+
+OPENAI_MESSAGE = (
+    # does not support ChatCompletionToolMessageParam or ChatCompletionFunctionMessageParam yet
+    ChatCompletionSystemMessageParam
+    | ChatCompletionDeveloperMessageParam
+    | ChatCompletionUserMessageParam
+    | ChatCompletionAssistantMessageParam
+)
+
+
+def pretty_print_turn_using_tab(turn: OPENAI_MESSAGE) -> str:
+    assert not 'refusal' in turn
+    role = turn['role']
+    match content := turn.get('content', None):
+        case None:
+            content_str = '<no content in response>'
+        case str():
+            content_str = content
+        case _:
+            raise ValueError('messages as list not supported')
+    return f'{role}\n{textwrap.indent(content_str, '\t')}'
+    
+
+
+def pretty_print_conversation_using_tab(conv: list[OPENAI_MESSAGE]) -> str:
+    return '\n\n'.join(pretty_print_turn_using_tab(turn) for turn in conv)

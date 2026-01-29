@@ -1,9 +1,15 @@
 """OpenAI-compatible LLM client."""
 
+import json
+import os
+from pathlib import Path
 import re
+from datetime import datetime
 
 from openai import OpenAI
+import yaml
 
+from src.shared.conversations import pretty_print_conversation_using_tab
 from src.shared.schemas import OpenAIConversation
 
 
@@ -59,9 +65,10 @@ class LLM:
             str: Generated text from the model
 
         """
+        openai_messages = messages.to_openai()
         response = self.client.chat.completions.create(
             model=self.model,
-            messages=messages.to_openai(),
+            messages=openai_messages,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
             extra_body={
@@ -73,7 +80,21 @@ class LLM:
         )
 
         raw_text = response.choices[0].message.content or ""
-        return self._strip_thinking(raw_text)
+        stripped_text = self._strip_thinking(raw_text)
+
+        if (log_to := os.environ.get('OPENAI_LOG_DIR', None)):
+            Path(log_to).mkdir(exist_ok=True, parents=True)
+            stem = datetime.now().strftime("%b %d, %Y %I:%M:%S %p")
+            Path(f'{log_to}/{stem} in.txt').write_text(
+                pretty_print_conversation_using_tab(openai_messages) # type: ignore
+            )
+            Path(f'{log_to}/{stem} in.json').write_text(
+                json.dumps(openai_messages, indent=4, ensure_ascii=False)
+            )
+            Path(f'{log_to}/{stem} think.txt').write_text(raw_text)
+            Path(f'{log_to}/{stem} out.txt').write_text(stripped_text)
+
+        return stripped_text
 
     def _strip_thinking(self, text: str) -> str:
         """Удаляет блоки <think>...</think> и возвращает финальный ответ модели."""
