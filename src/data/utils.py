@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from typing import Self, Literal, Any
 import copy
 
+from src import MTRAG_DATA
+
 
 @dataclass
 class MTRAG_Passage:
@@ -439,22 +441,22 @@ def load_corpus_passage_level(path: str | Path) -> list[MTRAG_Passage]:
     ]
 
 
-def load_conversations(path: str | Path) -> list[Conversation]:
-    """Loads MT-RAG conversations.
-    
-    ```
-    load_conversations('mt-rag-benchmark/human/conversations/conversations.json')
-    ```
-    """
+def load_conversations(
+    path: str | Path = MTRAG_DATA / 'human/conversations/conversations.json'
+) -> list[Conversation]:
+    """Loads MT-RAG conversations. Will use MTRAG_DATA if set (see readme)."""
     return [
         conversation_from_json(sample)
         for sample in json.loads(Path(path).read_text())
     ]
 
 
-def load_generation_tasks(path: str | Path) -> list[GenerationTask]:
-    """Loads MT-RAG generation tasks.
+def load_generation_tasks(
+    path: str | Path = MTRAG_DATA / 'human/generation_tasks/reference.json'
+) -> list[GenerationTask]:
+    """Loads MT-RAG generation tasks. Will use reference.json from MTRAG_DATA if set (see readme).
     
+    Examples:
     ```
     load_conversations('mt-rag-benchmark/human/generation_tasks/RAG.jsonl')
     load_conversations('mt-rag-benchmark/human/generation_tasks/reference.jsonl')

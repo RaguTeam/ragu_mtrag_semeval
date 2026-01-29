@@ -3,9 +3,20 @@
 ## Environment
 
 ```
-uv sync
-pre-commit install
+uv sync --extra eval
 source .venv/bin/activate
+pre-commit install
+```
+
+## Prepare data
+
+Clone github.com/IBM/mt-rag-benchmark to be able to use its data,
+and specify path in `.env` file, such as:
+
+```
+MTRAG_DATA=....../mt-rag-benchmark
+MTRAG_SPLITS=....../ragu_mtrag_eval_2026/splits
+PYTHONPATH=.
 ```
 
 ## Prepare local model
@@ -17,7 +28,7 @@ vllm serve Qwen/Qwen3-4B-FP8 --max_model_len 6000 --gpu_memory_utilization 0.85
 ## Run example with
 
 ```
-export PYTHONPATH=.
+source .env
 python src/generation/main.py
 ```
 

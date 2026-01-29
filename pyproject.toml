@@ -5,10 +5,36 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "openai>=2.15.0",
+    "openai",
     "pre-commit>=4.5.1",
+    "jsonlines",
 ]
 
+[project.optional-dependencies]
+eval = [
+    # from mt-rag-benchmark/scripts/evaluation/requirements.txt
+    "accelerate==1.4.0",
+    "tqdm",
+    "beautifulsoup4",
+    "lxml",
+    "pandas",
+    "evaluate==0.4.3",
+    "bert_score",
+    "rouge-score",
+    "ragas==0.3.3",
+    "protobuf==5.29.3",
+    "sentencepiece==0.2.0",
+    "pytrec_eval==0.5",
+    "langchain==0.2.17",
+    "langchain-community==0.2.19",
+    "bitsandbytes==0.47.0",
+    # "flash_attn==2.8.3",  # too long to build
+    "pydantic==2.11.7",
+    "vllm==0.10.2",
+]
+
+[tool.uv.extra-build-dependencies]
+flash-attn = ["torch"]
 
 [tool.ruff]
 line-length = 120
