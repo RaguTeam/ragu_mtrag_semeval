@@ -8,16 +8,21 @@ source .venv/bin/activate
 pre-commit install
 ```
 
-## Prepare data
+## Set paths to the data and code
 
-Clone github.com/IBM/mt-rag-benchmark to be able to use its data,
-and specify path in `.env` file, such as:
+Need to set paths to the data and code (example below):
 
 ```
-MTRAG_DATA=....../mt-rag-benchmark
-MTRAG_SPLITS=....../ragu_mtrag_eval_2026/splits
-PYTHONPATH=.
+export MTRAG_DATA=..../mt-rag-benchmark
+export MTRAG_SPLITS=..../ragu_mtrag_eval_2026/splits
+export PYTHONPATH=..../ragu_mtrag_eval_2026
+export OPENAI_URL=https://api.vsegpt.ru/v1
+export OPENAI_KEY=....
+export OPENAI_LOG_DIR=..../ragu_mtrag_eval_2026/logs/generation
 ```
+
+Where `mt-rag-benchmark` is a directory where github.com/IBM/mt-rag-benchmark was cloned.
+You may use .envrc file and load with `source .envrc`, or add to ~/.bashrc to auto-load.
 
 ## Prepare local model
 
@@ -28,7 +33,7 @@ vllm serve Qwen/Qwen3-4B-FP8 --max_model_len 6000 --gpu_memory_utilization 0.85
 ## Run example with
 
 ```
-source .env
+source .envrc
 python src/generation/main.py
 ```
 
@@ -37,8 +42,10 @@ python src/generation/main.py
 To generate predictions use data in the format provided in [reference.jsonl](https://github.com/IBM/mt-rag-benchmark/blob/main/human/generation_tasks/reference.jsonl) or evaluation data.
 
 ```
-export PYTHONPATH=.
-python scripts/generation/run_generation_task_b.py --input <INPUT FILE> --output --<OUTPUT FILE>
+source .envrc
+python scripts/generation/run_generation_task_b.py \
+    --input $MTRAG_DATA/human/generation_tasks/reference.jsonl --output output.json \
+    --base_url $OPENAI_URL --api_key $OPENAI_KEY --model qwen/qwen3-14b
 ```
 
 Optionally you can additional args:
