@@ -1,8 +1,8 @@
-from pathlib import Path
+import copy
 import json
 from dataclasses import dataclass, field
-from typing import Self, Literal, Any
-import copy
+from pathlib import Path
+from typing import Any, Literal, Self
 
 from src import MTRAG_DATA
 
@@ -27,7 +27,7 @@ class MTRAG_Passage:
     def __post_init__(self):
         """Rules inferred from the MTRAG data."""
         assert self._id == self.id
-        assert self.text.startswith(self.title + '\n')
+        assert self.text.startswith(self.title + "\n")
 
 
 @dataclass
@@ -61,16 +61,15 @@ class MTRAG_Document:
         """Performs field preprocessing to unify formats across corpora.
         Does not fill .passages
         """
-
         data = json.loads(json_string)
-        if '_id' in data:
+        if "_id" in data:
             # field varies: sometimes _id, sometimes document_id
-            assert 'id' not in data
-            data['document_id'] = data.pop('_id')
-        if 'metadata' in data:
+            assert "id" not in data
+            data["document_id"] = data.pop("_id")
+        if "metadata" in data:
             # always seems to be empty, so skip it
-            assert data['metadata'] == {}
-            del data['metadata']
+            assert data["metadata"] == {}
+            del data["metadata"]
         return cls(**data)
 
 
@@ -122,38 +121,40 @@ class GeneratorConfig:
 @dataclass
 class StatusHistory:
     author: str  # id
-    status: Literal['accepted', 'acceptted', 'edited', 'created', 'rejected', 'rejectted']  # wtf
+    status: Literal["accepted", "acceptted", "edited", "created", "rejected", "rejectted"]  # wtf
     timestamp: int
 
 
 @dataclass
 class RelevanceJudgement:
     annotator: str  # id
-    value: Literal['yes', 'no']
+    value: Literal["yes", "no"]
     timestamp: int
 
 
 @dataclass
 class UserMessageEnrichments:
-    multi_turn: Literal['Clarification', 'Follow-up', 'N/A']
-    answerability: Literal['ANSWERABLE', 'CONVERSATIONAL', 'PARTIAL', 'UNANSWERABLE']
-    question_type: list[Literal[
-        'Comparative',
-        'Composite',
-        'Explanation',
-        'Factoid',
-        'How-To',
-        'Keyword',
-        'Non-Question',
-        'Opinion',
-        'Summarization',
-        'Troubleshooting',
-    ]]
+    multi_turn: Literal["Clarification", "Follow-up", "N/A"]
+    answerability: Literal["ANSWERABLE", "CONVERSATIONAL", "PARTIAL", "UNANSWERABLE"]
+    question_type: list[
+        Literal[
+            "Comparative",
+            "Composite",
+            "Explanation",
+            "Factoid",
+            "How-To",
+            "Keyword",
+            "Non-Question",
+            "Opinion",
+            "Summarization",
+            "Troubleshooting",
+        ]
+    ]
 
 
 @dataclass
 class UserMessage:
-    speaker: Literal['user']
+    speaker: Literal["user"]
     text: str
     timestamp: int
     enrichments: UserMessageEnrichments
@@ -168,12 +169,12 @@ class AgentMessageContext:
     query: dict[str, Any]  # a query json in a format similar to RetrieverParameters.query_syntax
     feedback: list[RelevanceJudgement] | None = None  # possible annotator feedbacks if the passage is relevant or not
     title: str | None = None  # is this always the same as passsage.title for passage ID?
-    url: str | None = None # possibly the document URL
+    url: str | None = None  # possibly the document URL
 
 
 @dataclass
 class AgentMessage:
-    speaker: Literal['agent']
+    speaker: Literal["agent"]
     text: str
     timestamp: int
     contexts: list[AgentMessageContext]  # retrieved docs
@@ -207,7 +208,7 @@ class Conversation:
     generator: GeneratorConfig
     """Possibly a config for generator when generating a dialog."""
 
-    status: Literal['accepted']
+    status: Literal["accepted"]
     """All conversations have status 'accepted'."""
 
     status_history: list[StatusHistory]
@@ -217,11 +218,11 @@ class Conversation:
 @dataclass
 class GenerationTaskMessage:
     # similar to UserMessage and AgentMessage, but in GenerationTask format
-    speaker: Literal['user', 'agent']
+    speaker: Literal["user", "agent"]
     text: str
     author_id: str
     created_at: int  # timestamp
-    
+
 
 @dataclass
 class AgentMessageContextForGenerationTask:
@@ -230,12 +231,14 @@ class AgentMessageContextForGenerationTask:
     text: str  # is this always the same as passsage.text for passage ID?
     score: float  # what is this? a RAG score?
     source: str | None = None  # some unclear value
-    query: dict[str, Any] | None = None  # a query json in a format similar to RetrieverParameters.query_syntax (if RAG-retrieved)
+    query: dict[str, Any] | None = (
+        None  # a query json in a format similar to RetrieverParameters.query_syntax (if RAG-retrieved)
+    )
     feedback: list[RelevanceJudgement] | None = None  # possible annotator feedbacks if the passage is relevant or not
     title: str | None = None  # is this always the same as passsage.title for passage ID?
-    url: str | None = None # possibly the document URL
+    url: str | None = None  # possibly the document URL
     reference: bool = False  # is reference, or RAG-retrieved?
-    
+
 
 @dataclass
 class GenerationTask:
@@ -247,7 +250,7 @@ class GenerationTask:
     formatted as {conversation_id}<::>{turn}.
     """
 
-    task_type: Literal['rag']
+    task_type: Literal["rag"]
     """This field always equals "rag" for all the files
     human/generation_tasks/*.jsonl (is this a mistake?)
     """
@@ -255,30 +258,30 @@ class GenerationTask:
     turn: int
     """A turn (the index of answer+response pair in the conversation)."""
 
-    dataset: Literal['MT-RAG Authors (Internal)']
+    dataset: Literal["MT-RAG Authors (Internal)"]
 
     collection: Literal[
-        'mt-rag-govt-elser-512-100-20240611',
-        'mt-rag-ibmcloud-elser-512-100-20240502',
-        'mt-rag-fiqa-beir-elser-512-100-20240501',
-        'mt-rag-clapnq-elser-512-100-20240503',
+        "mt-rag-govt-elser-512-100-20240611",
+        "mt-rag-ibmcloud-elser-512-100-20240502",
+        "mt-rag-fiqa-beir-elser-512-100-20240501",
+        "mt-rag-clapnq-elser-512-100-20240503",
     ]
 
-    answerability: Literal['ANSWERABLE', 'CONVERSATIONAL', 'PARTIAL', 'UNANSWERABLE']
+    answerability: Literal["ANSWERABLE", "CONVERSATIONAL", "PARTIAL", "UNANSWERABLE"]
 
-    multi_turn: Literal['Clarification', 'Follow-up', 'N/A']
+    multi_turn: Literal["Clarification", "Follow-up", "N/A"]
 
     question_type: Literal[
-        'Comparative',
-        'Composite',
-        'Explanation',
-        'Factoid',
-        'How-To',
-        'Keyword',
-        'Non-Question',
-        'Opinion',
-        'Summarization',
-        'Troubleshooting',
+        "Comparative",
+        "Composite",
+        "Explanation",
+        "Factoid",
+        "How-To",
+        "Keyword",
+        "Non-Question",
+        "Opinion",
+        "Summarization",
+        "Troubleshooting",
     ]
 
     input: list[GenerationTaskMessage]
@@ -295,17 +298,21 @@ class GenerationTask:
     rewritten_query: str | None = None
     """Unclear field, looke like paraphrasing, not a co-reference resolution."""
 
-    standalone_type: Literal['Standalone', 'Non-standalone'] | None = None
+    standalone_type: Literal["Standalone", "Non-standalone"] | None = None
     """Non-standalone for 10 tasks, Standalone for 8 tasks and None for
     the remaining 2102 tasks.
     """
 
-    validity: Literal['Adversarial'] | None = None
+    validity: Literal["Adversarial"] | None = None
     """Adversarial for 3 tasks, None for all the remaining tasks."""
 
-    ambiguity_type: list[Literal[ # type: ignore
-        'Needs Context from Chatbot Response', 'Coreference', 'Ellipsis'
-    ]] = field(default_factory=list)
+    ambiguity_type: list[
+        Literal[  # type: ignore
+            "Needs Context from Chatbot Response",
+            "Coreference",
+            "Ellipsis",
+        ]
+    ] = field(default_factory=list)
     """Needs Context from Chatbot Response 3 times, Coreference 3 times,
     Ellipsis 2 times, empty for the remaining tasks.
     """
@@ -322,87 +329,82 @@ class GenerationTask:
 
 def _agent_message_context_from_json(json_data: dict[str, Any]) -> AgentMessageContext:
     json_data = copy.deepcopy(json_data)
-    if 'feedback' in json_data:
-        assert set(json_data['feedback'].keys()) == {'relevant'} # type: ignore
-        json_data['feedback'] = [
-            RelevanceJudgement(annotator=annotator, **data) # type: ignore
-            for annotator, data in json_data['feedback']['relevant'].items() # type: ignore
+    if "feedback" in json_data:
+        assert set(json_data["feedback"].keys()) == {"relevant"}  # type: ignore
+        json_data["feedback"] = [
+            RelevanceJudgement(annotator=annotator, **data)  # type: ignore
+            for annotator, data in json_data["feedback"]["relevant"].items()  # type: ignore
         ]
-    return AgentMessageContext(**json_data) # type: ignore
+    return AgentMessageContext(**json_data)  # type: ignore
 
 
 def _agent_message_context_gen_from_json(json_data: dict[str, Any]) -> AgentMessageContextForGenerationTask:
     json_data = copy.deepcopy(json_data)
-    if 'feedback' in json_data:
-        assert set(json_data['feedback'].keys()) == {'relevant'} # type: ignore
-        json_data['feedback'] = [
-            RelevanceJudgement(annotator=annotator, **data) # type: ignore
-            for annotator, data in json_data['feedback']['relevant'].items() # type: ignore
+    if "feedback" in json_data:
+        assert set(json_data["feedback"].keys()) == {"relevant"}  # type: ignore
+        json_data["feedback"] = [
+            RelevanceJudgement(annotator=annotator, **data)  # type: ignore
+            for annotator, data in json_data["feedback"]["relevant"].items()  # type: ignore
         ]
-    return AgentMessageContextForGenerationTask(**json_data) # type: ignore
+    return AgentMessageContextForGenerationTask(**json_data)  # type: ignore
 
 
 def _generation_task_message_from_json(json_data: dict[str, Any]) -> GenerationTaskMessage:
     return GenerationTaskMessage(
-        speaker=json_data['speaker'],
-        text=json_data['text'],
-        author_id=json_data['metadata']['author_id'],
-        created_at=json_data['metadata']['created_at'],
+        speaker=json_data["speaker"],
+        text=json_data["text"],
+        author_id=json_data["metadata"]["author_id"],
+        created_at=json_data["metadata"]["created_at"],
     )
 
 
 def conversation_from_json(json_data: dict[str, Any]) -> Conversation:
     json_data = copy.deepcopy(json_data)
 
-    json_data['retriever']['collection'] = \
-        RetrieverCollection(**json_data['retriever']['collection'])
-    json_data['retriever']['parameters'] = \
-        RetrieverParameters(**json_data['retriever']['parameters'])
-    json_data['retriever'] = RetrieverConfig(**json_data['retriever'])
+    json_data["retriever"]["collection"] = RetrieverCollection(**json_data["retriever"]["collection"])
+    json_data["retriever"]["parameters"] = RetrieverParameters(**json_data["retriever"]["parameters"])
+    json_data["retriever"] = RetrieverConfig(**json_data["retriever"])
 
-    json_data['generator']['prompt'] = \
-        GeneratorPrompt(**json_data['generator']['prompt'])
-    json_data['generator']['parameters'] = \
-        GeneratorParameters(**json_data['generator']['parameters'])
-    json_data['generator'] = GeneratorConfig(**json_data['generator'])
+    json_data["generator"]["prompt"] = GeneratorPrompt(**json_data["generator"]["prompt"])
+    json_data["generator"]["parameters"] = GeneratorParameters(**json_data["generator"]["parameters"])
+    json_data["generator"] = GeneratorConfig(**json_data["generator"])
 
-    json_data['status_history'] = \
-        [StatusHistory(**x) for x in json_data['status_history']]
-    
-    for message_idx, message in list(enumerate(json_data['messages'])): # type: ignore
+    json_data["status_history"] = [StatusHistory(**x) for x in json_data["status_history"]]
+
+    for message_idx, message in list(enumerate(json_data["messages"])):  # type: ignore
         if message_idx % 2 == 0:
-            assert message['speaker'] == 'user'
-            message['enrichments'] = UserMessageEnrichments(
-                multi_turn=message['enrichments']['Multi-Turn'], # type: ignore
-                answerability=message['enrichments']['Answerability'], # type: ignore
-                question_type=message['enrichments']['Question Type'], # type: ignore
+            assert message["speaker"] == "user"
+            message["enrichments"] = UserMessageEnrichments(
+                multi_turn=message["enrichments"]["Multi-Turn"],  # type: ignore
+                answerability=message["enrichments"]["Answerability"],  # type: ignore
+                question_type=message["enrichments"]["Question Type"],  # type: ignore
             )
-            json_data['messages'][message_idx] = UserMessage(**message) # type: ignore
+            json_data["messages"][message_idx] = UserMessage(**message)  # type: ignore
         else:
-            assert message['speaker'] == 'agent'
-            message['contexts'] = [_agent_message_context_from_json(data) for data in message['contexts']] # type: ignore
-            json_data['messages'][message_idx] = AgentMessage(**message) # type: ignore
-            
+            assert message["speaker"] == "agent"
+            message["contexts"] = [_agent_message_context_from_json(data) for data in message["contexts"]]  # type: ignore
+            json_data["messages"][message_idx] = AgentMessage(**message)  # type: ignore
+
     return Conversation(**json_data)
 
 
 def generation_task_from_json(json_data: dict[str, Any]) -> GenerationTask:
-    assert len(json_data['targets']) == 1
-    json_data['target'] = _generation_task_message_from_json(json_data.pop('targets')[0])
-    json_data['input'] = [_generation_task_message_from_json(x) for x in json_data['input']]
-    json_data['contexts'] = [_agent_message_context_gen_from_json(x) for x in json_data['contexts']]
-    json_data['question_type'] = json_data.pop('Question Type')
-    json_data['multi_turn'] = json_data.pop('Multi-Turn')
-    json_data['answerability'] = json_data.pop('Answerability')
-    json_data['collection'] = json_data.pop('Collection')
-    if 'Standalone Type' in json_data:
-        assert len(json_data['Standalone Type']) == 1
-        json_data['standalone_type'] = json_data.pop('Standalone Type')[0]
-    if 'Validity' in json_data:
-        assert len(json_data['Validity']) == 1
-        json_data['validity'] = json_data.pop('Validity')[0]
-    json_data['ambiguity_type'] = json_data.pop('Ambiguity Type', [])
-    json_data['n_references'] = json_data.pop('No. References', None)
+    assert len(json_data["targets"]) == 1
+    json_data["target"] = _generation_task_message_from_json(json_data.pop("targets")[0])
+    json_data["input"] = [_generation_task_message_from_json(x) for x in json_data["input"]]
+    json_data["contexts"] = [_agent_message_context_gen_from_json(x) for x in json_data["contexts"]]
+    json_data["question_type"] = json_data.pop("Question Type")
+    json_data["multi_turn"] = json_data.pop("Multi-Turn")
+    json_data["answerability"] = json_data.pop("Answerability")
+    json_data["collection"] = json_data.pop("Collection")
+    if "Standalone Type" in json_data:
+        assert len(json_data["Standalone Type"]) == 1
+        json_data["standalone_type"] = json_data.pop("Standalone Type")[0]
+    if "Validity" in json_data:
+        assert len(json_data["Validity"]) == 1
+        json_data["validity"] = json_data.pop("Validity")[0]
+    json_data["ambiguity_type"] = json_data.pop("Ambiguity Type", [])
+    json_data["n_references"] = json_data.pop("No. References", None)
     return GenerationTask(**json_data)
 
 
@@ -411,7 +413,7 @@ def generation_task_from_json(json_data: dict[str, Any]) -> GenerationTask:
 
 def load_corpus_document_level(path: str | Path) -> list[MTRAG_Document]:
     """Loads MT-RAG corpus in document-level format. Examples:
-    
+
     ```
     load_corpus_document_level('mt-rag-benchmark/corpora/document_level/clapnq.jsonl')
     load_corpus_document_level('mt-rag-benchmark/corpora/document_level/cloud.jsonl')
@@ -419,15 +421,12 @@ def load_corpus_document_level(path: str | Path) -> list[MTRAG_Document]:
     load_corpus_document_level('mt-rag-benchmark/corpora/document_level/gotv.jsonl')
     ```
     """
-    return [
-        MTRAG_Document.from_json(line)
-        for line in Path(path).read_text().strip().split('\n')
-    ]
+    return [MTRAG_Document.from_json(line) for line in Path(path).read_text().strip().split("\n")]
 
 
 def load_corpus_passage_level(path: str | Path) -> list[MTRAG_Passage]:
     """Loads MT-RAG corpus in passage-level format. Examples:
-    
+
     ```
     load_corpus_passage_level('mt-rag-benchmark/corpora/passage_level/clapnq.jsonl')
     load_corpus_passage_level('mt-rag-benchmark/corpora/passage_level/cloud.jsonl')
@@ -435,35 +434,27 @@ def load_corpus_passage_level(path: str | Path) -> list[MTRAG_Passage]:
     load_corpus_passage_level('mt-rag-benchmark/corpora/passage_level/gotv.jsonl')
     ```
     """
-    return [
-        MTRAG_Passage(**json.loads(line))
-        for line in Path(path).read_text().strip().split('\n')
-    ]
+    return [MTRAG_Passage(**json.loads(line)) for line in Path(path).read_text().strip().split("\n")]
 
 
 def load_conversations(
-    path: str | Path = MTRAG_DATA / 'human/conversations/conversations.json'
+    path: str | Path = MTRAG_DATA / "human/conversations/conversations.json",
 ) -> list[Conversation]:
     """Loads MT-RAG conversations. Will use MTRAG_DATA if set (see readme)."""
-    return [
-        conversation_from_json(sample)
-        for sample in json.loads(Path(path).read_text())
-    ]
+    return [conversation_from_json(sample) for sample in json.loads(Path(path).read_text())]
 
 
 def load_generation_tasks(
-    path: str | Path = MTRAG_DATA / 'human/generation_tasks/reference.json'
+    path: str | Path = MTRAG_DATA / "human/generation_tasks/reference.json",
 ) -> list[GenerationTask]:
     """Loads MT-RAG generation tasks. Will use reference.json from MTRAG_DATA if set (see readme).
-    
+
     Examples:
     ```
     load_conversations('mt-rag-benchmark/human/generation_tasks/RAG.jsonl')
     load_conversations('mt-rag-benchmark/human/generation_tasks/reference.jsonl')
     load_conversations('mt-rag-benchmark/human/generation_tasks/reference+RAG.jsonl')
     ```
+
     """
-    return [
-        generation_task_from_json(json.loads(line))
-        for line in Path(path).read_text().strip().split('\n')
-    ]
+    return [generation_task_from_json(json.loads(line)) for line in Path(path).read_text().strip().split("\n")]
