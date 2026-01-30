@@ -61,6 +61,25 @@ OPENAI_MESSAGE = (
 )
 
 
+def pretty_print_turn_one_row(turn: OPENAI_MESSAGE) -> str:
+    assert not 'refusal' in turn
+    role = turn['role']
+    match content := turn.get('content', None):
+        case None:
+            content_str = '<no content in response>'
+        case str():
+            content_str = content
+        case _:
+            raise ValueError('messages as list not supported')
+    return f'{role.capitalize()}: {content_str.replace('\n', '\\n')}'
+    
+
+
+def pretty_print_conversation(conv: list[OPENAI_MESSAGE]) -> str:
+    return '\n'.join(pretty_print_turn_one_row(turn) for turn in conv)
+
+
+
 def pretty_print_turn_using_tab(turn: OPENAI_MESSAGE) -> str:
     assert not 'refusal' in turn
     role = turn['role']

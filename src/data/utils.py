@@ -1,10 +1,17 @@
 import copy
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
+import re
 from typing import Any, Literal, Self
 
+from openai.types.chat import (
+    ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam,
+)
+
 from src import MTRAG_DATA
+from src.shared.conversations import pretty_print_conversation
 
 
 @dataclass
@@ -223,6 +230,15 @@ class GenerationTaskMessage:
     author_id: str
     created_at: int  # timestamp
 
+    def to_openai(self) -> ChatCompletionUserMessageParam | ChatCompletionAssistantMessageParam:
+        match self.speaker:
+            case 'agent':
+                return {'role': 'assistant', 'content': self.text}
+            case 'user':
+                return {'role': 'user', 'content': self.text}
+            case _:
+                raise ValueError('bad speaker field')
+
 
 @dataclass
 class AgentMessageContextForGenerationTask:
@@ -243,6 +259,32 @@ class AgentMessageContextForGenerationTask:
 @dataclass
 class GenerationTaskPrediction:
     text: str
+
+
+@dataclass
+class GenerationTaskMetrics:
+    Recall: float
+    RougeL_stemFalse: float
+    BertscoreP: float
+    BertscoreR: float
+    Length: float
+    RB_agg: float
+    idk_eval: float
+    RL_F: float
+    RB_llm: float
+    RL_F_idk: float
+    RB_llm_idk: float
+    RB_agg_idk: float
+    BertKPrec: list[float] | None = None
+    Extractiveness_RougeL: list[float] | None = None
+
+    def __post_init__(self):
+        # converts from 'idk_eval': [0.0] to 'idk_eval': 0.0
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, list) and field.type is float:
+                setattr(self, field.name, value[0])
+
 
 
 @dataclass
@@ -330,6 +372,8 @@ class GenerationTask:
 
     predictions: list[GenerationTaskPrediction] | None = None
 
+    metrics: GenerationTaskMetrics | None = None
+
 
 ##### loading utils #####
 
@@ -405,8 +449,12 @@ def generation_task_from_json(json_data: dict[str, Any]) -> GenerationTask:
     json_data["answerability"] = json_data.pop("Answerability")
     json_data["collection"] = json_data.pop("Collection")
     if "Standalone Type" in json_data:
-        assert len(json_data["Standalone Type"]) == 1
-        json_data["standalone_type"] = json_data.pop("Standalone Type")[0]
+        value = json_data.pop("Standalone Type")
+        if value is not None:
+            assert len(value) == 1
+            json_data["standalone_type"] = value[0]
+        else:
+            json_data["standalone_type"] = value
     if "Validity" in json_data:
         assert len(json_data["Validity"]) == 1
         json_data["validity"] = json_data.pop("Validity")[0]
@@ -414,6 +462,8 @@ def generation_task_from_json(json_data: dict[str, Any]) -> GenerationTask:
     json_data["n_references"] = json_data.pop("No. References", None)
     if "predictions" in json_data:
         json_data["predictions"] = [GenerationTaskPrediction(**x) for x in json_data["predictions"]]
+    if "metrics" in json_data:
+        json_data["metrics"] = GenerationTaskMetrics(**json_data["metrics"])
     return GenerationTask(**json_data)
 
 
@@ -467,3 +517,43 @@ def load_generation_tasks(
 
     """
     return [generation_task_from_json(json.loads(line)) for line in Path(path).read_text().strip().split("\n")]
+
+
+
+##### GenerationTask to GenerationTaskAnalysis #####
+
+@dataclass
+class GenerationTaskAnalysis:
+    """A GenerationTask formatted for displaying and manual analysis."""
+
+    dialog: str
+    """A conversation in human-readable way."""
+
+    documents: list[str]
+    """Documents in a human-readable way, without empty lines."""
+
+    reference: str
+    """The reference answer."""
+
+    prediction: str | None = None
+    """The predicted answer."""
+
+    metrics: GenerationTaskMetrics | None = None
+
+    @classmethod
+    def from_task(cls, task: GenerationTask) -> Self:
+        doc_texts_formatted = [
+            re.sub(r'\n[\n\s]+', '\n', doc.text.replace('\r', '').strip())
+            for doc in task.contexts
+        ]
+        return cls(
+            dialog=pretty_print_conversation([x.to_openai() for x in task.input]),
+            documents=doc_texts_formatted,
+            reference=task.target.text,
+            prediction=(
+                task.predictions[0].text
+                if task.predictions is not None
+                else None
+            ),
+            metrics=task.metrics,
+        )
