@@ -535,6 +535,23 @@ class GenerationTaskAnalysis:
     reference: str
     """The reference answer."""
 
+    answerability: Literal["ANSWERABLE", "CONVERSATIONAL", "PARTIAL", "UNANSWERABLE"]
+
+    multi_turn: Literal["Clarification", "Follow-up", "N/A"]
+
+    question_type: Literal[
+        "Comparative",
+        "Composite",
+        "Explanation",
+        "Factoid",
+        "How-To",
+        "Keyword",
+        "Non-Question",
+        "Opinion",
+        "Summarization",
+        "Troubleshooting",
+    ]
+
     prediction: str | None = None
     """The predicted answer."""
 
@@ -556,4 +573,7 @@ class GenerationTaskAnalysis:
                 else None
             ),
             metrics=task.metrics,
+            answerability=task.answerability,
+            multi_turn=task.multi_turn,
+            question_type=task.question_type,
         )
