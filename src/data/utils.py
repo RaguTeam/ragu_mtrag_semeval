@@ -241,6 +241,11 @@ class AgentMessageContextForGenerationTask:
 
 
 @dataclass
+class GenerationTaskPrediction:
+    text: str
+
+
+@dataclass
 class GenerationTask:
     conversation_id: str
     """The ID of the whole conversation of multiple turns."""
@@ -306,7 +311,7 @@ class GenerationTask:
     validity: Literal["Adversarial"] | None = None
     """Adversarial for 3 tasks, None for all the remaining tasks."""
 
-    ambiguity_type: list[
+    ambiguity_type: list[ # type: ignore
         Literal[  # type: ignore
             "Needs Context from Chatbot Response",
             "Coreference",
@@ -322,6 +327,8 @@ class GenerationTask:
     Counter({None: 1278, 2: 266, 3: 243, 1: 105, 4: 96, 0: 65, 5: 36,
          6: 21, 7: 8, 9: 1, 8: 1})
     """
+
+    predictions: list[GenerationTaskPrediction] | None = None
 
 
 ##### loading utils #####
@@ -405,6 +412,8 @@ def generation_task_from_json(json_data: dict[str, Any]) -> GenerationTask:
         json_data["validity"] = json_data.pop("Validity")[0]
     json_data["ambiguity_type"] = json_data.pop("Ambiguity Type", [])
     json_data["n_references"] = json_data.pop("No. References", None)
+    if "predictions" in json_data:
+        json_data["predictions"] = [GenerationTaskPrediction(**x) for x in json_data["predictions"]]
     return GenerationTask(**json_data)
 
 
