@@ -2,7 +2,7 @@
 
 from openai.types.chat import ChatCompletionAssistantMessageParam, ChatCompletionUserMessageParam
 
-from src.shared.schemas import OPENAI_MESSAGE, ExtendedConversation, OpenAIDocument
+from src.shared.schemas import OPENAI_MESSAGE, OpenAIDocument
 
 
 COREFERENCE_RESOLUTION = (
@@ -64,12 +64,10 @@ COREFERENCE_EXAMPLE: list[OPENAI_MESSAGE] = [
 ]
 
 
-EXAMPLE_CONVERSATION = ExtendedConversation([
+EXAMPLE_CONVERSATION: list[OPENAI_MESSAGE] = [
     ChatCompletionUserMessageParam(role="user", content="Привет!"),
     ChatCompletionAssistantMessageParam(role="assistant", content="Привет, как я могу помочь?"),
     ChatCompletionUserMessageParam(role="user", content="Что произошло в прошлом году?"),
-    OpenAIDocument("Компания отчиталась о рекордной прибыли в 2023 году."),
-    OpenAIDocument("В прошлом году был принят новый закон."),
     ChatCompletionAssistantMessageParam(role="assistant", content="В прошлом году был принят закон, хоть и не сказано, какой"),
     ChatCompletionUserMessageParam(role="user", content="Расскажи про Чарли Чаплина"),
     ChatCompletionAssistantMessageParam(
@@ -77,5 +75,8 @@ EXAMPLE_CONVERSATION = ExtendedConversation([
         content="Чарли Чаплин был одним из самых творческих и влиятельных людей в эпоху немого кино",
     ),
     ChatCompletionUserMessageParam(role="user", content="Когда он родился?"),
+]
+
+EXAMPLE_CONVERSATION_DOCUMENTS = [
     OpenAIDocument("Чарли Чаплин родился 16 апреля 1889 года в Лондоне."),
-])
+]

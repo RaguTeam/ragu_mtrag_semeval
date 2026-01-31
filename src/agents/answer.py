@@ -1,13 +1,13 @@
 """Agent for answering questions using provided documents."""
 
+import copy
 from datetime import date
 
 from openai.types.chat import ChatCompletionSystemMessageParam
 
 from src.client.openai_compatible import LLM
-from src.shared.prompts import ANSWER_QUESTION
-from src.shared.schemas import ExtendedConversation
-from src.shared.conversations import extended_to_openai
+from src.shared.prompts import ANSWER_QUESTION, DOCUMENT_TEMPLATE
+from src.shared.schemas import OPENAI_MESSAGE, OpenAIDocument
 
 
 class AnswerAgent:
@@ -17,7 +17,11 @@ class AnswerAgent:
         """Initialize the AnswerAgent."""
         self.llm = llm
 
-    def answer(self, conversation: ExtendedConversation) -> str:
+    def answer(
+        self,
+        conversation: list[OPENAI_MESSAGE],
+        docs: list[OpenAIDocument],
+    ) -> str:
         """Generate the final answer based on the conversation.
 
         Args:
@@ -29,10 +33,14 @@ class AnswerAgent:
         """
         today = date.today().isoformat()
 
-        openai_conversation = extended_to_openai(conversation.messages)
+        conversation = copy.deepcopy(conversation)
+        assert conversation[-1]['role'] == 'user'
+        assert isinstance(conversation[-1]['content'], str)
+        for doc in docs:
+            conversation[-1]['content'] += DOCUMENT_TEMPLATE.format(content=doc.text)
+        
+        system_prompt = ChatCompletionSystemMessageParam(
+            role="system", content=ANSWER_QUESTION.format(date=today)
+        )
 
-        prompt = [
-            ChatCompletionSystemMessageParam(role="system", content=ANSWER_QUESTION.format(date=today)),
-        ] + openai_conversation
-
-        return self.llm.generate(prompt)
+        return self.llm.generate([system_prompt] + conversation)

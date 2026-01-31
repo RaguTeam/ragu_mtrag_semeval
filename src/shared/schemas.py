@@ -22,10 +22,3 @@ OPENAI_MESSAGE = (
 @dataclass(frozen=True)
 class OpenAIDocument:
     text: str
-
-
-@dataclass
-class ExtendedConversation:
-    """Extended conversation with document messages."""
-
-    messages: list[OPENAI_MESSAGE | OpenAIDocument]

@@ -48,8 +48,8 @@ if __name__ == "__main__":
             if args.max_examples is not None and task_idx >= args.max_examples:
                 break
 
-            conv = task_to_conversation(task, doc_header=args.doc_header)
-            pred = qa.run(conv)
+            conv, docs = task_to_conversation(task, doc_header=args.doc_header)
+            pred = qa.run(conv, docs)
             task_json["predictions"] = [{"text": pred}]
             fout.write(json.dumps(task_json, ensure_ascii=False) + "\n")
 

@@ -1,7 +1,7 @@
 """Conversations list."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 import textwrap
 
 from openai.types.chat import (
@@ -9,77 +9,16 @@ from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
 )
 
-from src.shared.prompts import DOCUMENT_TEMPLATE
-from src.shared.schemas import OPENAI_MESSAGE, ExtendedConversation, OpenAIDocument
+from src.shared.schemas import OPENAI_MESSAGE, OpenAIDocument
 if TYPE_CHECKING:
     from src.data.utils import GenerationTask
 
 
-def extended_to_openai(
-    messages: list[OPENAI_MESSAGE | OpenAIDocument],
-) -> list[OPENAI_MESSAGE]:
-    """Convert ExtendedConversation messages to OpenAIConversation format.
-
-    Args:
-        messages: List of ExtendedMessage instances.
-
-    Returns:
-        list[OpenAIMessage]: Converted list of OpenAIMessage instances.
-
-    """
-    openai_messages: list[OPENAI_MESSAGE] = []
-
-    pending_user: OPENAI_MESSAGE | None = None
-
-
-    for msg in messages:
-        is_doc = isinstance(msg, OpenAIDocument)
-
-        if not is_doc and msg['role'] == "user":
-            if pending_user is not None:
-                openai_messages.append(pending_user)
-
-            pending_user = ChatCompletionUserMessageParam(
-                role="user",
-                content=msg['content'],
-            )
-
-        elif is_doc:
-            if pending_user is None:
-                raise ValueError(
-                    "Document message encountered without preceding user message",
-                )
-
-            pending_user = ChatCompletionUserMessageParam(
-                role="user",
-                content=(
-                    cast(str, pending_user['content'])
-                    + DOCUMENT_TEMPLATE.format(content=msg.text)
-                ),
-            )
-
-        elif not is_doc and msg['role'] == "assistant":
-            if pending_user is not None:
-                openai_messages.append(pending_user)
-                pending_user = None
-
-            openai_messages.append(msg.copy())
-
-        elif not is_doc and msg['role'] == "system":
-            openai_messages.append(msg.copy())
-
-        else:
-            raise ValueError(f"Unsupported role: {msg['role']}")
-
-    if pending_user is not None:
-        openai_messages.append(pending_user)
-
-    return openai_messages
-
-
-def task_to_conversation(task: GenerationTask, doc_header: bool = True) -> ExtendedConversation:
-    msgs: list[OPENAI_MESSAGE | OpenAIDocument] = []
-
+def task_to_conversation(
+    task: GenerationTask, doc_header: bool = True
+) -> tuple[list[OPENAI_MESSAGE], list[OpenAIDocument]]:
+    
+    msgs: list[OPENAI_MESSAGE] = []
     for m in task.input:
         if m.speaker == "user":
             msgs.append(ChatCompletionUserMessageParam(role='user', content=m.text))
@@ -88,6 +27,7 @@ def task_to_conversation(task: GenerationTask, doc_header: bool = True) -> Exten
         else:
             raise ValueError(f"Unknown speaker {m.speaker!r} in task_id={task.task_id}")
 
+    docs: list[OpenAIDocument] = []
     for i, ctx in enumerate(task.contexts, start=1):
         doc_id = getattr(ctx, "document_id", None)
         title = getattr(ctx, "title", "") or ""
@@ -106,9 +46,9 @@ def task_to_conversation(task: GenerationTask, doc_header: bool = True) -> Exten
         else:
             content = text
 
-        msgs.append(OpenAIDocument(content))
+        docs.append(OpenAIDocument(content))
 
-    return ExtendedConversation(msgs)
+    return msgs, docs
 
 
 def pretty_print_turn_one_row(turn: OPENAI_MESSAGE) -> str:

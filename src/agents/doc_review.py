@@ -10,7 +10,7 @@ from openai.types.chat import (
 from src.shared.schemas import OPENAI_MESSAGE
 from src.client.openai_compatible import LLM
 from src.shared.prompts import RELEVANCE_FILTERING
-from src.shared.schemas import ExtendedConversation, OpenAIDocument
+from src.shared.schemas import OpenAIDocument
 
 
 class RelevanceAgent:
@@ -20,27 +20,29 @@ class RelevanceAgent:
         """Initialize the RelevanceAgent."""
         self.llm = llm
 
-    def filter(self, conversation: ExtendedConversation) -> ExtendedConversation:
+    def filter(
+        self,
+        conversation: list[OPENAI_MESSAGE],
+        docs: list[OpenAIDocument],
+    ) -> list[int]:
         """Filter documents based on relevance to the user question.
 
         Args:
             conversation: List of messages in the conversation.
 
         Returns:
-            str: List of messages with only relevant documents retained.
+            str: Indices of relevant docs.
 
         """
         today = date.today().isoformat()
-        user_question = next(
-            m['content']
-            for m in reversed(conversation.messages)
-            if not isinstance(m, OpenAIDocument) and m['role'] == "user"
-        )
 
-        filtered_docs: list[OpenAIDocument] = []
-        context = [m for m in conversation.messages if not isinstance(m, OpenAIDocument)]
+        assert conversation[-1]['role'] == 'user'
+        user_question = conversation[-1]['content']
+        assert isinstance(user_question, str)
 
-        for doc in [m for m in conversation.messages if isinstance(m, OpenAIDocument)]:
+        filtered_doc_idx: list[int] = []
+
+        for doc_idx, doc in enumerate(docs):
             prompt: list[OPENAI_MESSAGE] = [
                 ChatCompletionSystemMessageParam(role="system", content=RELEVANCE_FILTERING.format(date=today)),
                 ChatCompletionUserMessageParam(role="user", content=f"Question: {user_question}"),
@@ -49,6 +51,6 @@ class RelevanceAgent:
             verdict = self.llm.generate(prompt).strip().lower()
 
             if verdict == "yes":
-                filtered_docs.append(doc)
+                filtered_doc_idx.append(doc_idx)
 
-        return ExtendedConversation(context + filtered_docs)
+        return filtered_doc_idx

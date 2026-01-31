@@ -2,7 +2,7 @@
 
 from src.client.openai_compatible import LLM
 from src.generation.assembly import MultiAgentQA
-from shared.prompts import EXAMPLE_CONVERSATION
+from src.shared.prompts import EXAMPLE_CONVERSATION, EXAMPLE_CONVERSATION_DOCUMENTS
 
 if __name__ == "__main__":
     host = "http://localhost:8000/v1"
@@ -14,5 +14,5 @@ if __name__ == "__main__":
         model="Qwen/Qwen3-4B-FP8",
     )
     qa_system = MultiAgentQA(llm)
-    answer = qa_system.run(EXAMPLE_CONVERSATION)
+    answer = qa_system.run(EXAMPLE_CONVERSATION, EXAMPLE_CONVERSATION_DOCUMENTS)
     print("Final Answer:", answer)
