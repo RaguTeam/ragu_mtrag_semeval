@@ -63,7 +63,7 @@ def task_to_conversation(task: GenerationTask, doc_header: bool = True) -> Exten
         doc_id_str = "" if doc_id is None else str(doc_id)
 
         if doc_header:
-            header_bits = []
+            header_bits: list[str] = []
             if title:
                 header_bits.append(f"title={title}")
             if doc_id_str:
@@ -79,7 +79,7 @@ def task_to_conversation(task: GenerationTask, doc_header: bool = True) -> Exten
 
 
 def ensure_nonempty(pred: str, task_id: str, base_url: str, model: str) -> str:
-    if pred is None or pred.strip() == "":
+    if pred is None or pred.strip() == "": # pyright: ignore[reportUnnecessaryComparison]
         raise RuntimeError(
             "Empty model output detected. Stopping to avoid writing invalid predictions.\n"
             f"task_id={task_id}\n"
@@ -106,7 +106,7 @@ def main():
     ap.add_argument("--keep_error", action="store_true", help="If set, write prediction_error then stop (still stops).")
     args = ap.parse_args()
 
-    done_ids = load_existing_task_ids(args.output) if args.resume else set()
+    done_ids: set[str] = load_existing_task_ids(args.output) if args.resume else set()
 
     llm = LLM(api_key=args.api_key, base_url=args.base_url, model=args.model)
     qa = MultiAgentQA(llm)
