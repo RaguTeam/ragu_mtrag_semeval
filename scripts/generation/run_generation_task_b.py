@@ -2,6 +2,7 @@ import argparse
 import json
 from pathlib import Path
 import textwrap
+from typing import cast
 
 import jsonlines
 
@@ -15,17 +16,23 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True)
     ap.add_argument("--output", required=True)
+    ap.add_argument("--split_file", required=False)
     ap.add_argument("--base_url", default="http://localhost:8001/v1")
     ap.add_argument("--model", default="Qwen/Qwen3-4B")
     ap.add_argument("--api_key", default="testkey")
     ap.add_argument("--max_examples", type=int, default=None)
     ap.add_argument("--doc_header", action="store_true")
+    ap.add_argument("--no_coreference_resolution", action="store_true")
     args = ap.parse_args()
 
     tasks = [
         (data, generation_task_from_json(data))
         for data in jsonlines.open(args.input) # type: ignore
     ]
+
+    if args.split_file:
+        task_ids = set(cast(list[str], json.loads(Path(args.split_file).read_text())))
+        tasks = [(data, task) for data, task in tasks if task.task_id in task_ids]
 
     done_ids = [
         generation_task_from_json(data).task_id
@@ -38,7 +45,7 @@ if __name__ == "__main__":
         model=args.model,
         ensure_nonempty=True,
     )
-    qa = MultiAgentQA(llm, coreference_resolution=True)
+    qa = MultiAgentQA(llm, coreference_resolution=not args.no_coreference_resolution)
 
     with open(args.output, 'a', encoding="utf-8", newline="\n") as fout:
         for task_idx, (task_json, task) in enumerate(tasks):
