@@ -13,6 +13,6 @@ if __name__ == "__main__":
         base_url=host,
         model="Qwen/Qwen3-4B-FP8",
     )
-    qa_system = MultiAgentQA(llm)
+    qa_system = MultiAgentQA(llm, coreference_resolution=True)
     answer = qa_system.run(EXAMPLE_CONVERSATION, EXAMPLE_CONVERSATION_DOCUMENTS)
     print("Final Answer:", answer)

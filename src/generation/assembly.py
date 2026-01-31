@@ -22,6 +22,7 @@ class MultiAgentQA:
     def __init__(
         self,
         llm: LLM,
+        coreference_resolution: bool,
     ) -> None:
         """Multi-agent question answering system.
 
@@ -29,7 +30,11 @@ class MultiAgentQA:
             llm: An instance of the LLM client.
 
         """
-        self.coref_agent = CoreferenceAgent(llm)
+        self.coref_agent = (
+            CoreferenceAgent(llm)
+            if coreference_resolution
+            else None
+        )
         # self.relevance_agent = RelevanceAgent(llm)
         self.answer_agent = AnswerAgent(llm)
 
@@ -49,7 +54,9 @@ class MultiAgentQA:
         """
         conversation = copy.deepcopy(conversation)
         assert conversation[-1]['role'] == 'user'
-        conversation[-1]['content'] = self.coref_agent.resolve(conversation)
+
+        if self.coref_agent:
+            conversation[-1]['content'] = self.coref_agent.resolve(conversation)
 
         # 2. Relevance filtering
         # conversation = self.relevance_agent.filter(conversation)

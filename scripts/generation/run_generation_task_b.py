@@ -38,7 +38,7 @@ if __name__ == "__main__":
         model=args.model,
         ensure_nonempty=True,
     )
-    qa = MultiAgentQA(llm)
+    qa = MultiAgentQA(llm, coreference_resolution=True)
 
     with open(args.output, 'a', encoding="utf-8", newline="\n") as fout:
         for task_idx, (task_json, task) in enumerate(tasks):
