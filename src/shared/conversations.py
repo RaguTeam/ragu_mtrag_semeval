@@ -15,9 +15,9 @@ if TYPE_CHECKING:
 
 
 def task_to_conversation(
-    task: GenerationTask, doc_header: bool = True
+    task: GenerationTask, doc_header: bool = True,
 ) -> tuple[list[OPENAI_MESSAGE], list[OpenAIDocument]]:
-    
+
     msgs: list[OPENAI_MESSAGE] = []
     for m in task.input:
         if m.speaker == "user":

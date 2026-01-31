@@ -38,9 +38,9 @@ class AnswerAgent:
         assert isinstance(conversation[-1]['content'], str)
         for doc in docs:
             conversation[-1]['content'] += DOCUMENT_TEMPLATE.format(content=doc.text)
-        
+
         system_prompt = ChatCompletionSystemMessageParam(
-            role="system", content=ANSWER_QUESTION.format(date=today)
+            role="system", content=ANSWER_QUESTION.format(date=today),
         )
 
         return self.llm.generate([system_prompt] + conversation)
