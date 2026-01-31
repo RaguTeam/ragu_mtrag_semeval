@@ -2,7 +2,7 @@
 
 from src.client.openai_compatible import LLM
 from src.generation.assembly import MultiAgentQA
-from src.shared.conversations import EXAMPLE_CONVERSATION
+from shared.prompts import EXAMPLE_CONVERSATION
 
 if __name__ == "__main__":
     host = "http://localhost:8000/v1"

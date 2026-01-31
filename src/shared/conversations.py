@@ -1,7 +1,7 @@
 """Conversations list."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 import textwrap
 
 from openai.types.chat import (
@@ -9,51 +9,72 @@ from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
 )
 
+from src.shared.prompts import DOCUMENT_TEMPLATE
 from src.shared.schemas import OPENAI_MESSAGE, ExtendedConversation, OpenAIDocument
 if TYPE_CHECKING:
     from src.data.utils import GenerationTask
 
 
-COREFERENCE_EXAMPLE: list[OPENAI_MESSAGE] = [
-    ChatCompletionUserMessageParam(
-        role="user",
-        content="""[
-    {"role": "user", "content": "Who is Albert Einstein?"},
-    {"role": "assistant", "content": "Albert Einstein was a German-born theoretical physicist best known for developin"
-    "g the theory of relativity."},
-    {"role": "user", "content": "When was he born?"},
-    """,
-    ),
-    ChatCompletionAssistantMessageParam(role="assistant", content="When was Albert Einstein born?"),
-    ChatCompletionUserMessageParam(
-        role="user",
-        content="""[
-    {"role": "user", "content": "What year was 'Attention is all you need' paper released?"},
-    {"role": "assistant", "content": ""Attention Is All You Need" is a  research paper in machine learning authored by"
-    " eight scientists working at Google. It was proposed in the year 2017."},
-    {"role": "user", "content": "What was last year's most cited work?"},
-    """,
-    ),
-    ChatCompletionAssistantMessageParam(role="assistant", content="What was year 2025 most cited work?"),
-]
+def extended_to_openai(
+    messages: list[OPENAI_MESSAGE | OpenAIDocument],
+) -> list[OPENAI_MESSAGE]:
+    """Convert ExtendedConversation messages to OpenAIConversation format.
 
-EXAMPLE_CONVERSATION = ExtendedConversation([
-    ChatCompletionUserMessageParam(role="user", content="Привет!"),
-    ChatCompletionAssistantMessageParam(role="assistant", content="Привет, как я могу помочь?"),
-    ChatCompletionUserMessageParam(role="user", content="Что произошло в прошлом году?"),
-    OpenAIDocument("Компания отчиталась о рекордной прибыли в 2023 году."),
-    OpenAIDocument("В прошлом году был принят новый закон."),
-    ChatCompletionAssistantMessageParam(role="assistant", content="В прошлом году был принят закон, хоть и не сказано, какой"),
-    ChatCompletionUserMessageParam(role="user", content="Расскажи про Чарли Чаплина"),
-    ChatCompletionAssistantMessageParam(
-        role="assistant",
-        content="Чарли Чаплин был одним из самых творческих и влиятельных людей в эпоху немого кино",
-    ),
-    ChatCompletionUserMessageParam(role="user", content="Когда он родился?"),
-    OpenAIDocument("Чарли Чаплин родился 16 апреля 1889 года в Лондоне."),
-])
+    Args:
+        messages: List of ExtendedMessage instances.
+
+    Returns:
+        list[OpenAIMessage]: Converted list of OpenAIMessage instances.
+
+    """
+    openai_messages: list[OPENAI_MESSAGE] = []
+
+    pending_user: OPENAI_MESSAGE | None = None
 
 
+    for msg in messages:
+        is_doc = isinstance(msg, OpenAIDocument)
+
+        if not is_doc and msg['role'] == "user":
+            if pending_user is not None:
+                openai_messages.append(pending_user)
+
+            pending_user = ChatCompletionUserMessageParam(
+                role="user",
+                content=msg['content'],
+            )
+
+        elif is_doc:
+            if pending_user is None:
+                raise ValueError(
+                    "Document message encountered without preceding user message",
+                )
+
+            pending_user = ChatCompletionUserMessageParam(
+                role="user",
+                content=(
+                    cast(str, pending_user['content'])
+                    + DOCUMENT_TEMPLATE.format(content=msg.text)
+                ),
+            )
+
+        elif not is_doc and msg['role'] == "assistant":
+            if pending_user is not None:
+                openai_messages.append(pending_user)
+                pending_user = None
+
+            openai_messages.append(msg.copy())
+
+        elif not is_doc and msg['role'] == "system":
+            openai_messages.append(msg.copy())
+
+        else:
+            raise ValueError(f"Unsupported role: {msg['role']}")
+
+    if pending_user is not None:
+        openai_messages.append(pending_user)
+
+    return openai_messages
 
 
 def task_to_conversation(task: GenerationTask, doc_header: bool = True) -> ExtendedConversation:

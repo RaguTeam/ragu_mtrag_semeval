@@ -3,15 +3,12 @@
 from datetime import date
 
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
+from shared.prompts import COREFERENCE_EXAMPLE
 
 from src.client.openai_compatible import LLM
-from src.shared.conversations import COREFERENCE_EXAMPLE
+from src.shared.conversations import extended_to_openai
 from src.shared.prompts import COREFERENCE_RESOLUTION
-from src.shared.schemas import (
-    ExtendedConversation,
-    OpenAIDocument,
-    extended_to_openai,
-)
+from src.shared.schemas import ExtendedConversation, OpenAIDocument
 
 
 class CoreferenceAgent:

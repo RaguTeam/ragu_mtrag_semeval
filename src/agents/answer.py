@@ -6,7 +6,8 @@ from openai.types.chat import ChatCompletionSystemMessageParam
 
 from src.client.openai_compatible import LLM
 from src.shared.prompts import ANSWER_QUESTION
-from src.shared.schemas import ExtendedConversation, extended_to_openai
+from src.shared.schemas import ExtendedConversation
+from src.shared.conversations import extended_to_openai
 
 
 class AnswerAgent:
