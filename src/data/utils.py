@@ -526,8 +526,11 @@ def load_generation_tasks(
 class GenerationTaskAnalysis:
     """A GenerationTask formatted for displaying and manual analysis."""
 
+    task_id: str
+    """A unique ID for the task."""
+
     dialog: str
-    """A conversation in human-readable way."""
+    """A previous conversation in human-readable way."""
 
     documents: list[str]
     """Documents in a human-readable way, without empty lines."""
@@ -557,6 +560,12 @@ class GenerationTaskAnalysis:
 
     metrics: GenerationTaskMetrics | None = None
 
+    analysis: list[tuple[str, str, str, str]] | None = None
+    """Optional field with additonal questions to LLM as judge. Each element
+    contains (title, prompt, model_name, answer), where prompt and answer can be
+    multi-line, and title is a short description of the prompt.
+    """
+
     @classmethod
     def from_task(cls, task: GenerationTask) -> Self:
         doc_texts_formatted = [
@@ -564,6 +573,7 @@ class GenerationTaskAnalysis:
             for doc in task.contexts
         ]
         return cls(
+            task_id=task.task_id,
             dialog=pretty_print_conversation([x.to_openai() for x in task.input]),
             documents=doc_texts_formatted,
             reference=task.target.text,
