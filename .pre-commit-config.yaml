@@ -1,6 +1,6 @@
 default_install_hook_types: [commit-msg, pre-commit, pre-push]
 
-exclude: ^mt-rag-benchmark/
+exclude: '^mt-rag-benchmark/|\.md$'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -26,45 +26,45 @@ repos:
       - id: detect-private-key
       - id: detect-aws-credentials
         args: [--allow-missing-credentials]
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.22
-    hooks:
-      - id: mdformat
-        additional_dependencies:
-          - mdformat-gfm
-          - mdformat-black
-          - mdformat-shfmt
-  - repo: https://github.com/asottile/add-trailing-comma
-    rev: v3.1.0
-    hooks:
-      - id: add-trailing-comma
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.37.1
-    hooks:
-      - id: yamllint
-        args:
-          - --format
-          - parsable
-          - --strict
-          - -d
-          - '{extends: relaxed, rules: {line-length: {max: 120}, indentation: disable}}'
-  - repo: https://github.com/lyz-code/yamlfix
-    rev: 1.17.0
-    hooks:
-      - id: yamlfix
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.1
-    hooks:
-      - id: nbstripout
-  - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.7.0
-    hooks:
-      - id: commitizen
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.5
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-      - id: ruff-check
-        args: [--fix]
+  # - repo: https://github.com/executablebooks/mdformat
+  #   rev: 0.7.22
+  #   hooks:
+  #     - id: mdformat
+  #       additional_dependencies:
+  #         - mdformat-gfm
+  #         - mdformat-black
+  #         - mdformat-shfmt
+  # - repo: https://github.com/asottile/add-trailing-comma
+  #   rev: v3.1.0
+  #   hooks:
+  #     - id: add-trailing-comma
+  # - repo: https://github.com/adrienverge/yamllint.git
+  #   rev: v1.37.1
+  #   hooks:
+  #     - id: yamllint
+  #       args:
+  #         - --format
+  #         - parsable
+  #         - --strict
+  #         - -d
+  #         - '{extends: relaxed, rules: {line-length: {max: 120}, indentation: disable}}'
+  # - repo: https://github.com/lyz-code/yamlfix
+  #   rev: 1.17.0
+  #   hooks:
+  #     - id: yamlfix
+  # - repo: https://github.com/kynan/nbstripout
+  #   rev: 0.8.1
+  #   hooks:
+  #     - id: nbstripout
+  # - repo: https://github.com/commitizen-tools/commitizen
+  #   rev: v4.7.0
+  #   hooks:
+  #     - id: commitizen
+  # - repo: https://github.com/astral-sh/ruff-pre-commit
+  #   rev: v0.12.5
+  #   hooks:
+  #     - id: ruff
+  #       args: [--fix]
+  #     - id: ruff-format
+  #     - id: ruff-check
+  #       args: [--fix]

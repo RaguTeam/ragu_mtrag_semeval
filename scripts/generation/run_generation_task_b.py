@@ -52,5 +52,5 @@ if __name__ == "__main__":
             pred = qa.run(conv)
             task_json["predictions"] = [{"text": pred}]
             fout.write(json.dumps(task_json, ensure_ascii=False) + "\n")
-            
+
             print(textwrap.shorten(pred, width=80))

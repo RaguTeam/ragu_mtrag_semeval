@@ -15,7 +15,7 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
     """
     Launches a Dash application to visualize GenerationTask conversations.
     """
-    
+
     # --- Data Processing ---
     # Group tasks by conversation_id and sort by turn
     conversations: Dict[str, List[GenerationTask]] = defaultdict(list)
@@ -74,10 +74,10 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
             dbc.Badge(task.answerability, color="info" if task.answerability == "ANSWERABLE" else "warning", className="me-1"),
             dbc.Badge(task.question_type, color="secondary", className="me-1"),
         ]
-        
+
         if task.multi_turn and task.multi_turn != "N/A":
             badges.append(dbc.Badge(task.multi_turn, color="primary", className="me-1"))
-            
+
         if task.rewritten_query:
             badges.append(dbc.Badge("Query Rewritten", color="success", className="me-1"))
 
@@ -90,16 +90,16 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
 
         accordion_items = []
         for idx, ctx_item in enumerate(contexts):
-            
+
             # Format Reference Judgements
             feedback_display = []
             if ctx_item.feedback:
                 for fb in ctx_item.feedback:
                     color = "success" if fb.value == 'yes' else "danger"
                     feedback_display.append(dbc.Badge(f"{fb.annotator}: {fb.value}", color=color, className="me-1"))
-            
+
             header = f"[{ctx_item.score:.4f}] {ctx_item.title or 'Doc ' + str(ctx_item.document_id)}"
-            
+
             content = html.Div([
                 html.Div(feedback_display, className="mb-2") if feedback_display else None,
                 html.P(ctx_item.text, style={"whiteSpace": "pre-wrap", "fontSize": "0.9em"}),
@@ -119,11 +119,11 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
 
     def render_turn(task: GenerationTask):
         """Renders a single turn (Latest User Message -> Agent Response)."""
-        
+
         # 1. Identify the latest user message from input history
         # In a generic conversation structure, the last message in 'input' allows us to see what triggered 'target'
         last_input_msg = task.input[-1] if task.input else None
-        
+
         elements = []
 
         # Render User Message (if it exists and is user - usually index -1 is user in RAG)
@@ -138,15 +138,15 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
                      ], width=12)
                 ])
             )
-        
+
         # Render Agent Response (Target) + Metadata + Contexts
-        
+
         # Prepare Context/Analysis Section
         analysis_card = dbc.Card([
             dbc.CardHeader("RAG Analysis"),
             dbc.CardBody([
                 html.Div([
-                    html.Strong("Rewritten Query: "), 
+                    html.Strong("Rewritten Query: "),
                     html.Span(task.rewritten_query if task.rewritten_query else "None", className="text-info")
                 ], className="mb-2 small"),
                 html.Strong("Retrieved Contexts:", className="small"),
@@ -161,10 +161,10 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
                         html.Div(render_message_metadata(task), style=CHAT_STYLE["meta_box"]),
                         html.Strong("Agent"),
                         html.Div(task.target.text),
-                        # Embed the analysis inside or below the agent bubble? 
+                        # Embed the analysis inside or below the agent bubble?
                         # Putting it below is cleaner for the "Chat" feel.
                     ], style=CHAT_STYLE["agent"]),
-                    
+
                     # Context Accordion rendered below the agent response
                     analysis_card
                 ], width=12)
@@ -179,7 +179,7 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
         dbc.Row([
             dbc.Col(html.H2("RAG Conversation Viewer"), width=12, className="my-3 text-center")
         ]),
-        
+
         dbc.Row([
             # --- Sidebar ---
             dbc.Col([
@@ -202,7 +202,7 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
                         )
                     ])
                 ], className="mb-3"),
-                
+
                 html.Div(id='conversation-stats', className="small text-muted")
             ], width=3),
 
@@ -228,7 +228,7 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
     def update_conversation_list(selected_collection):
         if not selected_collection:
             return [], None
-        
+
         # Filter conversations that belong to this collection (checking the first task is sufficient usually)
         valid_ids = []
         for conv_id, tasks in conversations.items():
@@ -237,9 +237,9 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
                 turn_count = len(tasks)
                 label = f"{conv_id} ({turn_count} turns)"
                 valid_ids.append({'label': label, 'value': conv_id})
-        
+
         valid_ids.sort(key=lambda x: x['label'])
-        
+
         first_val = valid_ids[0]['value'] if valid_ids else None
         return valid_ids, first_val
 
@@ -254,7 +254,7 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
             return html.Div("Please select a conversation."), "No Conversation Selected", ""
 
         tasks = conversations[conv_id]
-        
+
         # Build the view
         chat_flow = []
         for task in tasks:

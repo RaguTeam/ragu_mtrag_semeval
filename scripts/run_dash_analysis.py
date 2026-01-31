@@ -35,5 +35,3 @@ for pred in chain(*preds.values()):
     pred.analysis = [('q1', 'prompt_q1', 'gemini', 'answer1'), ('q2', 'prompt_q2', 'gemini', 'answer2')]
 
 run_dashboard(preds)
-
-

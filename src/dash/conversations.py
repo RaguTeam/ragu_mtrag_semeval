@@ -20,41 +20,41 @@ def run_dashboard(conversations: List[Conversation]):
     def render_enrichments(enrichments):
         """Renders UserMessage enrichments as badges."""
         badges = []
-        
+
         # Multi-turn
         mt_color = "info" if enrichments.multi_turn != "N/A" else "secondary"
         badges.append(dbc.Badge(f"Turn: {enrichments.multi_turn}", color=mt_color, className="me-1"))
-        
+
         # Answerability
         ans_color = "success" if enrichments.answerability == "ANSWERABLE" else "warning" if enrichments.answerability == "PARTIAL" else "danger"
         badges.append(dbc.Badge(enrichments.answerability, color=ans_color, className="me-1"))
-        
+
         # Question Types
         for qt in enrichments.question_type:
             # Fixed: removed 'outline' argument, used text_color and light background to distinguish
             badges.append(dbc.Badge(qt, color="light", text_color="dark", className="me-1 border border-secondary"))
-            
+
         return html.Div(badges, className="mb-2")
 
     def render_context(ctx, index):
         """Renders a single RAG context retrieval item."""
-        
+
         # Handle feedback (Relevance Judgments)
         judgements = []
         if ctx.feedback:
             for fb in ctx.feedback:
                 color = "success" if fb.value == "yes" else "danger"
                 judgements.append(dbc.Badge(f"{fb.annotator}: {fb.value}", color=color, className="me-1"))
-        
+
         feedback_div = html.Div(judgements, className="mb-1")
-        
+
         # Score formatting
         score_badge = dbc.Badge(f"Score: {ctx.score:.4f}", color="primary", className="me-2")
-        
+
         # Content
         # Handle cases where title or url might be None
         title_text = ctx.title if ctx.title else f"Doc ID: {ctx.document_id}"
-        
+
         return dbc.AccordionItem(
             [
                 html.Div([score_badge, feedback_div]),
@@ -70,7 +70,7 @@ def run_dashboard(conversations: List[Conversation]):
         """Renders a single User or Agent message."""
         if isinstance(msg, UserMessage):
             header = html.Div([
-                html.Strong("User"), 
+                html.Strong("User"),
                 html.Span(f" (TS: {msg.timestamp})", className="text-muted small ms-2")
             ])
             body = html.Div([
@@ -88,14 +88,14 @@ def run_dashboard(conversations: List[Conversation]):
                 html.Strong("Agent"),
                 html.Span(f" (TS: {msg.timestamp})", className="text-muted small ms-2"),
             ])
-            
+
             # Text Content
             text_content = html.Div(msg.text, style={"whiteSpace": "pre-wrap", "marginBottom": "15px"})
-            
+
             # Contexts (Accordion)
             ctx_items = [render_context(ctx, i) for i, ctx in enumerate(msg.contexts)]
             context_accordion = dbc.Accordion(ctx_items, start_collapsed=True, flush=True) if ctx_items else html.Em("No contexts retrieved.")
-            
+
             # Original text if modified
             original = html.Div([
                 html.Hr(),
@@ -105,10 +105,10 @@ def run_dashboard(conversations: List[Conversation]):
 
             return dbc.Card(
                 dbc.CardBody([
-                    header, 
-                    text_content, 
-                    html.Hr(), 
-                    html.H6("Retrieved Contexts", className="msg-header"), 
+                    header,
+                    text_content,
+                    html.Hr(),
+                    html.H6("Retrieved Contexts", className="msg-header"),
                     context_accordion,
                     original
                 ]),
@@ -137,7 +137,7 @@ def run_dashboard(conversations: List[Conversation]):
         dbc.Row([
             dbc.Col(html.H2("MTRAG Conversation Viewer"), width=12, className="my-3 text-center")
         ]),
-        
+
         dbc.Row([
             # Sidebar: Conversation Selector
             dbc.Col([
@@ -147,7 +147,7 @@ def run_dashboard(conversations: List[Conversation]):
                         dcc.Dropdown(
                             id='conv-selector',
                             options=[
-                                {'label': f"#{i} {c.messages[0].text}", 'value': i} 
+                                {'label': f"#{i} {c.messages[0].text}", 'value': i}
                                 for i, c in enumerate(conversations)
                             ],
                             value=0 if conversations else None,
@@ -200,7 +200,7 @@ def run_dashboard(conversations: List[Conversation]):
         # 2. Render Configurations (Right Sidebar)
         retriever_viz = render_config_json(conv.retriever, "Retriever Config")
         generator_viz = render_config_json(conv.generator, "Generator Config")
-        
+
         config_viz = html.Div([
             html.H5("Details", className="mb-3"),
             retriever_viz,
@@ -209,10 +209,10 @@ def run_dashboard(conversations: List[Conversation]):
 
         # 3. Render Metadata (Left Sidebar)
         status_badges = [
-            dbc.Badge(f"{h.status} by {h.author} (@{h.timestamp})", 
-                      color="secondary", 
-                      className="d-block mb-1 text-wrap", 
-                      style={"textAlign": "left"}) 
+            dbc.Badge(f"{h.status} by {h.author} (@{h.timestamp})",
+                      color="secondary",
+                      className="d-block mb-1 text-wrap",
+                      style={"textAlign": "left"})
             for h in conv.status_history
         ]
 

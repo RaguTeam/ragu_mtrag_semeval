@@ -1,4 +1,4 @@
-# %% 
+# %%
 
 from pathlib import Path
 from collections import defaultdict
@@ -14,7 +14,7 @@ from src.data.utils import (
 
 
 
-# %% 
+# %%
 
 MTRAG_DIR = Path('/home/oleg/rag_workspace/mt-rag-benchmark')
 
@@ -28,19 +28,19 @@ for name in 'clapnq', 'cloud', 'fiqa', 'govt':
     )
 
 
-# %% 
+# %%
 
 conversations = load_conversations(MTRAG_DIR / 'human/conversations/conversations.json')
 print(f'{len(conversations)=}')
 
 
-# %% 
+# %%
 
 generation_tasks = load_generation_tasks(MTRAG_DIR / 'human/generation_tasks/reference.jsonl')
 print(f'{len(generation_tasks)=}')
 
 
-# %% 
+# %%
 
 OUTPUT_DIR = Path('dialogs')
 OUTPUT_DIR.mkdir(exist_ok=True, parents=True)

@@ -122,7 +122,7 @@ def pretty_print_turn_one_row(turn: OPENAI_MESSAGE) -> str:
         case _:
             raise ValueError('messages as list not supported')
     return f'{role.capitalize()}: {content_str.replace('\n', '\\n')}'
-    
+
 
 
 def pretty_print_conversation(conv: list[OPENAI_MESSAGE]) -> str:
@@ -141,7 +141,7 @@ def pretty_print_turn_using_tab(turn: OPENAI_MESSAGE) -> str:
         case _:
             raise ValueError('messages as list not supported')
     return f'{role}\n{textwrap.indent(content_str, '\t')}'
-    
+
 
 
 def pretty_print_conversation_using_tab(conv: list[OPENAI_MESSAGE]) -> str:
