@@ -20,6 +20,12 @@ preds = {
     'meno_gte_new_prompt': load_preds(
         'data/old_set/RAGU/test_answers_subsample_meno_gte_new_prompt.jsonl'
     ),
+    'qwen3_4b_eval_by_gemma': load_preds(
+        'data/test_96/eval_qwen34b_coreference_test96.jsonl'
+    ),
+    'qwen3_8b_eval_by_gemma': load_preds(
+        'data/test_96/eval_qwen38b_coreference_test96.jsonl'
+    ),
     # 'answers_subsample_result_2': load_preds(
     #     'data/old_set/RAGU/answers_subsample_result_2.jsonl'
     # ),
