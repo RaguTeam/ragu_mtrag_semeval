@@ -87,10 +87,10 @@ class LLM:
             Path(log_to).mkdir(exist_ok=True, parents=True)
             stem = datetime.now().strftime("%b %d, %Y %I:%M:%S %p")
             Path(f'{log_to}/{stem} in.txt').write_text(
-                pretty_print_conversation_using_tab(messages) # type: ignore
+                pretty_print_conversation_using_tab(messages), # type: ignore
             )
             Path(f'{log_to}/{stem} in.json').write_text(
-                json.dumps(messages, indent=4, ensure_ascii=False)
+                json.dumps(messages, indent=4, ensure_ascii=False),
             )
             Path(f'{log_to}/{stem} think.txt').write_text(raw_text)
             Path(f'{log_to}/{stem} out.txt').write_text(stripped_text)
@@ -103,7 +103,7 @@ class LLM:
                 "Empty model output detected. Stopping to avoid writing invalid predictions.\n"
                 f"base_url={self.client._base_url}\n" # pyright: ignore[reportPrivateUsage]
                 f"model={self.model}\n"
-                "Common causes: vLLM server not running, wrong base_url, model name mismatch, auth mismatch."
+                "Common causes: vLLM server not running, wrong base_url, model name mismatch, auth mismatch.",
             )
 
         return stripped_text

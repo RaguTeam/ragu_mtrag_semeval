@@ -24,7 +24,7 @@ for name in 'clapnq', 'cloud', 'fiqa', 'govt':
     print(
         f'{name}:'
         f' {len(documents)} documents'
-        f', {len(passages)} passages'
+        f', {len(passages)} passages',
     )
 
 

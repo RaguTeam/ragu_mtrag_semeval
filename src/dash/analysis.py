@@ -68,7 +68,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'flexDirection': 'column',
         'overflow': 'hidden',
         'padding': '10px',
-        'boxSizing': 'border-box'
+        'boxSizing': 'border-box',
     }
 
     STYLE_ROW_CONTROL = {'display': 'flex', 'gap': '15px', 'paddingBottom': '10px', 'flexShrink': 0}
@@ -84,7 +84,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'flexDirection': 'column',
         'minHeight': '0', # Crucial for flex scrolling
         'border': '1px solid #ccc',
-        'borderRadius': '4px'
+        'borderRadius': '4px',
     }
 
     STYLE_DETAILS_HEADER = {
@@ -95,7 +95,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'gap': '20px',
         'flexWrap': 'wrap',
         'fontSize': '14px',
-        'flexShrink': 0
+        'flexShrink': 0,
     }
 
     # Body: containing Left and Right panels
@@ -110,7 +110,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'backgroundColor': '#fafafa',
         'display': 'flex',
         'flexDirection': 'column',
-        'gap': '20px'
+        'gap': '20px',
     }
 
     # Right Panel: Container for vertically split sections
@@ -119,7 +119,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'display': 'flex',
         'flexDirection': 'column',
         'height': '100%',
-        'backgroundColor': '#fff'
+        'backgroundColor': '#fff',
     }
 
     # Right Top (Documents): Flex 2
@@ -127,7 +127,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'flex': '2',
         'overflowY': 'auto',
         'padding': '15px',
-        'borderBottom': '1px solid #eee'
+        'borderBottom': '1px solid #eee',
     }
 
     # Right Bottom (Analysis): Flex 1
@@ -135,7 +135,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'flex': '1',
         'overflowY': 'auto',
         'padding': '15px',
-        'backgroundColor': '#fcfcfc'
+        'backgroundColor': '#fcfcfc',
     }
 
     STYLE_SECTION_TITLE = {
@@ -145,7 +145,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'fontWeight': 'bold',
         'marginBottom': '6px',
         'borderBottom': '2px solid #eee',
-        'paddingBottom': '2px'
+        'paddingBottom': '2px',
     }
 
     STYLE_TEXT_BLOCK = {'whiteSpace': 'pre-wrap', 'fontSize': '13px', 'lineHeight': '1.5'}
@@ -156,7 +156,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'marginBottom': '8px',
         'fontSize': '12px',
         'borderRadius': '3px',
-        'whiteSpace': 'pre-wrap'
+        'whiteSpace': 'pre-wrap',
     }
 
     STYLE_FOOTER = {
@@ -167,7 +167,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         'display': 'flex',
         'flexWrap': 'wrap',
         'gap': '15px',
-        'flexShrink': 0
+        'flexShrink': 0,
     }
 
     # --- 3. Helper Functions ---
@@ -193,49 +193,75 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
 
     app = Dash(__name__)
 
-    app.layout = html.Div(style=STYLE_CONTAINER, children=[
-        # 1. Selectors
-        html.Div(style=STYLE_ROW_CONTROL, children=[
-            html.Div(style=STYLE_CONTROL_GROUP, children=[
-                html.Label('Model', style=STYLE_LABEL),
-                dcc.Dropdown(id='sel-model', options=[{'label': m, 'value': m} for m in models],
-                             value=models[0] if models else None, clearable=False)
-            ]),
-            html.Div(style=STYLE_CONTROL_GROUP, children=[
-                html.Label('Task Index (ID)', style=STYLE_LABEL | {'width': '400px'}),
-                dcc.Dropdown(id='sel-task', options=[{'label': f"#{i} ({t_id})", 'value': i} for i, t_id in enumerate(sorted_ids)],
-                             value=0 if sorted_ids else None, clearable=False)
-            ]),
-            html.Div(style=STYLE_CONTROL_GROUP, children=[
-                html.Label('Plot Metric', style=STYLE_LABEL),
-                dcc.Dropdown(id='sel-metric', options=[{'label': m, 'value': m} for m in metric_options],
-                             value=default_metric, clearable=False)
-            ]),
-            html.Div(style=STYLE_CONTROL_GROUP, children=[
-                html.Label('Analysis Type', style=STYLE_LABEL),
-                dcc.Dropdown(id='sel-analysis', options=[{'label': a, 'value': a} for a in analysis_options],
-                             value=default_analysis, clearable=True, placeholder="Select analysis...")
-            ]),
-        ]),
+    app.layout = html.Div(
+        style=STYLE_CONTAINER, children=[
+            # 1. Selectors
+            html.Div(
+                style=STYLE_ROW_CONTROL, children=[
+                    html.Div(
+                        style=STYLE_CONTROL_GROUP, children=[
+                            html.Label('Model', style=STYLE_LABEL),
+                            dcc.Dropdown(
+                                id='sel-model', options=[{'label': m, 'value': m} for m in models],
+                                value=models[0] if models else None, clearable=False,
+                            ),
+                        ],
+                    ),
+                    html.Div(
+                        style=STYLE_CONTROL_GROUP, children=[
+                            html.Label('Task Index (ID)', style=STYLE_LABEL | {'width': '400px'}),
+                            dcc.Dropdown(
+                                id='sel-task', options=[{'label': f"#{i} ({t_id})", 'value': i} for i, t_id in enumerate(sorted_ids)],
+                                value=0 if sorted_ids else None, clearable=False,
+                            ),
+                        ],
+                    ),
+                    html.Div(
+                        style=STYLE_CONTROL_GROUP, children=[
+                            html.Label('Plot Metric', style=STYLE_LABEL),
+                            dcc.Dropdown(
+                                id='sel-metric', options=[{'label': m, 'value': m} for m in metric_options],
+                                value=default_metric, clearable=False,
+                            ),
+                        ],
+                    ),
+                    html.Div(
+                        style=STYLE_CONTROL_GROUP, children=[
+                            html.Label('Analysis Type', style=STYLE_LABEL),
+                            dcc.Dropdown(
+                                id='sel-analysis', options=[{'label': a, 'value': a} for a in analysis_options],
+                                value=default_analysis, clearable=True, placeholder="Select analysis...",
+                            ),
+                        ],
+                    ),
+                ],
+            ),
 
-        # 2. Plots
-        html.Div(style=STYLE_PLOT_AREA, children=[
-            dcc.Graph(id='main-heatmap', style={'height': '100%'}, config={'displayModeBar': False})
-        ]),
+            # 2. Plots
+            html.Div(
+                style=STYLE_PLOT_AREA, children=[
+                    dcc.Graph(id='main-heatmap', style={'height': '100%'}, config={'displayModeBar': False}),
+                ],
+            ),
 
-        # 3. Details (Fills the rest)
-        html.Div(id='details-container', style=STYLE_DETAILS_AREA)
-    ])
+            # 3. Details (Fills the rest)
+            html.Div(id='details-container', style=STYLE_DETAILS_AREA),
+        ],
+    )
 
     # --- 5. Callback ---
 
     @app.callback(
-        [Output('main-heatmap', 'figure'),
-         Output('details-container', 'children')],
-        [Input('sel-model', 'value'),
-         Input('sel-task', 'value'),
-         Input('sel-metric', 'value'),
-         Input('sel-analysis', 'value')]
+        [
+            Output('main-heatmap', 'figure'),
+            Output('details-container', 'children'),
+        ],
+        [
+            Input('sel-model', 'value'),
+            Input('sel-task', 'value'),
+            Input('sel-metric', 'value'),
+            Input('sel-analysis', 'value'),
+        ],
     )
     def update_view(selected_model, task_idx, selected_metric, selected_analysis):
 
@@ -260,22 +286,26 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
             z_values.append(row_z)
             hover_texts.append(row_hover)
 
-        fig = go.Figure(data=go.Heatmap(
-            z=z_values, x=[f"#{i}" for i in range(len(sorted_ids))], y=models,
-            text=hover_texts, hoverinfo='text', colorscale='Portland', showscale=True
-        ))
+        fig = go.Figure(
+            data=go.Heatmap(
+                z=z_values, x=[f"#{i}" for i in range(len(sorted_ids))], y=models,
+                text=hover_texts, hoverinfo='text', colorscale='Portland', showscale=True,
+            ),
+        )
 
         fig.update_layout(
             margin=dict(l=50, r=50, t=10, b=30),
             xaxis=dict(title='Task Index', tickmode='auto'),
-            yaxis=dict(title='', automargin=True)
+            yaxis=dict(title='', automargin=True),
         )
 
         if selected_model and task_idx is not None:
              try:
                 y_idx = models.index(selected_model)
-                fig.add_shape(type="rect", x0=task_idx-0.5, x1=task_idx+0.5, y0=y_idx-0.5, y1=y_idx+0.5,
-                              line=dict(color="red", width=2), fillcolor="rgba(0,0,0,0)")
+                fig.add_shape(
+                    type="rect", x0=task_idx-0.5, x1=task_idx+0.5, y0=y_idx-0.5, y1=y_idx+0.5,
+                    line=dict(color="red", width=2), fillcolor="rgba(0,0,0,0)",
+                )
              except ValueError: pass
 
         # --- B. Build Details ---
@@ -289,36 +319,40 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         if not task_data:
             return fig, html.Div(
                 html.H3(f"No prediction found for Model '{selected_model}' on Task '{task_id}'"),
-                style={'padding': '20px', 'textAlign': 'center', 'color': '#777'}
+                style={'padding': '20px', 'textAlign': 'center', 'color': '#777'},
             )
 
         # 1. Header
-        header = html.Div(style=STYLE_DETAILS_HEADER, children=[
-            html.Span([html.B("Task ID: "), task_data.task_id]),
-            html.Span([html.B("Answerability: "), task_data.answerability]),
-            html.Span([html.B("Multi Turn: "), task_data.multi_turn]),
-            html.Span([html.B("Type: "), task_data.question_type]),
-        ])
+        header = html.Div(
+            style=STYLE_DETAILS_HEADER, children=[
+                html.Span([html.B("Task ID: "), task_data.task_id]),
+                html.Span([html.B("Answerability: "), task_data.answerability]),
+                html.Span([html.B("Multi Turn: "), task_data.multi_turn]),
+                html.Span([html.B("Type: "), task_data.question_type]),
+            ],
+        )
 
         # 2. Content Sections
 
         # --- Left Side: Dialog, Reference, Prediction ---
         pred_content = task_data.prediction if task_data.prediction else html.I("None", style={'color': '#999'})
 
-        left_panel = html.Div(style=STYLE_PANEL_LEFT, children=[
-            html.Div([
-                html.Div("Dialog", style=STYLE_SECTION_TITLE),
-                html.Div(format_dialog(task_data.dialog), style=STYLE_TEXT_BLOCK)
-            ]),
-            html.Div([
-                html.Div("Reference", style=STYLE_SECTION_TITLE),
-                html.Div(task_data.reference, style=STYLE_TEXT_BLOCK)
-            ]),
-            html.Div([
-                html.Div("Prediction", style=STYLE_SECTION_TITLE),
-                html.Div(pred_content, style=STYLE_TEXT_BLOCK)
-            ])
-        ])
+        left_panel = html.Div(
+            style=STYLE_PANEL_LEFT, children=[
+                html.Div([
+                    html.Div("Dialog", style=STYLE_SECTION_TITLE),
+                    html.Div(format_dialog(task_data.dialog), style=STYLE_TEXT_BLOCK),
+                ]),
+                html.Div([
+                    html.Div("Reference", style=STYLE_SECTION_TITLE),
+                    html.Div(task_data.reference, style=STYLE_TEXT_BLOCK),
+                ]),
+                html.Div([
+                    html.Div("Prediction", style=STYLE_SECTION_TITLE),
+                    html.Div(pred_content, style=STYLE_TEXT_BLOCK),
+                ]),
+            ],
+        )
 
         # --- Right Side: Documents (Top), Analysis (Bottom) ---
 
@@ -330,10 +364,12 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         else:
             doc_elements.append(html.Div("No documents.", style={'fontStyle': 'italic', 'color': '#999'}))
 
-        right_docs = html.Div(style=STYLE_RIGHT_TOP, children=[
-            html.Div("Documents", style=STYLE_SECTION_TITLE),
-            html.Div(doc_elements)
-        ])
+        right_docs = html.Div(
+            style=STYLE_RIGHT_TOP, children=[
+                html.Div("Documents", style=STYLE_SECTION_TITLE),
+                html.Div(doc_elements),
+            ],
+        )
 
         # Analysis
         analysis_divs = []
@@ -345,12 +381,12 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
                     analysis_divs = [
                         html.Div([
                             html.Span("Prompt:", style={'fontWeight': 'bold', 'color': '#555'}),
-                            html.Div(p, style={**STYLE_TEXT_BLOCK, 'marginBottom': '10px', 'paddingLeft': '10px', 'borderLeft': '3px solid #ddd'})
+                            html.Div(p, style={**STYLE_TEXT_BLOCK, 'marginBottom': '10px', 'paddingLeft': '10px', 'borderLeft': '3px solid #ddd'}),
                         ]),
                         html.Div([
                             html.Span("Answer:", style={'fontWeight': 'bold', 'color': '#555'}),
-                            html.Div(a, style={**STYLE_TEXT_BLOCK, 'paddingLeft': '10px', 'borderLeft': '3px solid #ddd'})
-                        ])
+                            html.Div(a, style={**STYLE_TEXT_BLOCK, 'paddingLeft': '10px', 'borderLeft': '3px solid #ddd'}),
+                        ]),
                     ]
                     break
             if not found:
@@ -360,10 +396,12 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
         else:
             analysis_divs = [html.Div("Select an analysis type above.", style={'color': '#ccc', 'fontStyle': 'italic'})]
 
-        right_analysis = html.Div(style=STYLE_RIGHT_BOTTOM, children=[
-            html.Div(f"Analysis: {selected_analysis if selected_analysis else '(None)'}", style=STYLE_SECTION_TITLE),
-            html.Div(analysis_divs)
-        ])
+        right_analysis = html.Div(
+            style=STYLE_RIGHT_BOTTOM, children=[
+                html.Div(f"Analysis: {selected_analysis if selected_analysis else '(None)'}", style=STYLE_SECTION_TITLE),
+                html.Div(analysis_divs),
+            ],
+        )
 
         # Assemble Right Panel
         right_panel = html.Div(style=STYLE_PANEL_RIGHT, children=[right_docs, right_analysis])
@@ -374,19 +412,23 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
             for k, v in task_data.metrics.__dict__.items():
                 if isinstance(v, float):
                     style = {'fontWeight': 'bold', 'color': '#007bff'} if k == selected_metric else {}
-                    metric_spans.append(html.Span([
-                        html.Span(f"{k}: ", style={'color': '#666'}),
-                        html.Span(f"{v:.4f}", style=style)
-                    ]))
+                    metric_spans.append(
+                        html.Span([
+                            html.Span(f"{k}: ", style={'color': '#666'}),
+                            html.Span(f"{v:.4f}", style=style),
+                        ]),
+                    )
 
         footer = html.Div(style=STYLE_FOOTER, children=metric_spans if metric_spans else "No metrics available.")
 
         # Final Assembly
-        details_layout = html.Div([
-            header,
-            html.Div(style=STYLE_DETAILS_BODY, children=[left_panel, right_panel]),
-            footer
-        ], style={'display': 'flex', 'flexDirection': 'column', 'height': '100%'})
+        details_layout = html.Div(
+            [
+                header,
+                html.Div(style=STYLE_DETAILS_BODY, children=[left_panel, right_panel]),
+                footer,
+            ], style={'display': 'flex', 'flexDirection': 'column', 'height': '100%'},
+        )
 
         return fig, details_layout
 

@@ -41,8 +41,10 @@ COREFERENCE_EXAMPLE: list[OPENAI_MESSAGE] = [
         role="user",
         content=str([
             {"role": "user", "content": "Who is Albert Einstein?"},
-            {"role": "assistant", "content": "Albert Einstein was a German-born theoretical physicist best known for developin"
-            "g the theory of relativity."},
+            {
+                "role": "assistant", "content": "Albert Einstein was a German-born theoretical physicist best known for developin"
+                "g the theory of relativity.",
+            },
             {"role": "user", "content": "When was he born?"},
         ]),
     ),
@@ -51,8 +53,10 @@ COREFERENCE_EXAMPLE: list[OPENAI_MESSAGE] = [
         role="user",
         content=str([
             {"role": "user", "content": "What year was 'Attention is all you need' paper released?"},
-            {"role": "assistant", "content": "\"Attention Is All You Need\" is a  research paper in machine learning authored by"
-            " eight scientists working at Google. It was proposed in the year 2017."},
+            {
+                "role": "assistant", "content": "\"Attention Is All You Need\" is a  research paper in machine learning authored by"
+                " eight scientists working at Google. It was proposed in the year 2017.",
+            },
             {"role": "user", "content": "What was last year's most cited work?"},
         ]),
     ),

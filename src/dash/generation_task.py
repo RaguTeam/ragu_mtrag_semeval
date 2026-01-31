@@ -42,7 +42,7 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
             "marginBottom": "10px",
             "maxWidth": "80%",
             "marginLeft": "auto",
-            "textAlign": "left"
+            "textAlign": "left",
         },
         "agent": {
             "backgroundColor": "#f1f0f0",
@@ -52,15 +52,15 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
             "marginBottom": "10px",
             "maxWidth": "80%",
             "marginRight": "auto",
-            "textAlign": "left"
+            "textAlign": "left",
         },
         "meta_box": {
             "fontSize": "0.85em",
             "color": "#666",
             "marginBottom": "5px",
             "borderBottom": "1px solid #eee",
-            "paddingBottom": "5px"
-        }
+            "paddingBottom": "5px",
+        },
     }
 
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -107,12 +107,12 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
                 html.Small(f"Doc ID: {ctx_item.document_id} | URL: {ctx_item.url}", className="text-muted"),
                 html.Details([
                     html.Summary("Raw Query JSON"),
-                    html.Pre(json.dumps(ctx_item.query, indent=2), className="bg-light p-2 small")
-                ])
+                    html.Pre(json.dumps(ctx_item.query, indent=2), className="bg-light p-2 small"),
+                ]),
             ])
 
             accordion_items.append(
-                dbc.AccordionItem(content, title=header, item_id=f"ctx-{task_id}-{idx}")
+                dbc.AccordionItem(content, title=header, item_id=f"ctx-{task_id}-{idx}"),
             )
 
         return dbc.Accordion(accordion_items, start_collapsed=True, flush=True)
@@ -130,100 +130,122 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
         if last_input_msg and last_input_msg.speaker == 'user':
             elements.append(
                 dbc.Row([
-                     dbc.Col([
-                        html.Div([
-                            html.Strong("User"),
-                            html.Div(last_input_msg.text)
-                        ], style=CHAT_STYLE["user"])
-                     ], width=12)
-                ])
+                     dbc.Col(
+                         [
+                            html.Div(
+                                [
+                                    html.Strong("User"),
+                                    html.Div(last_input_msg.text),
+                                ], style=CHAT_STYLE["user"],
+                            ),
+                         ], width=12,
+                     ),
+                ]),
             )
 
         # Render Agent Response (Target) + Metadata + Contexts
 
         # Prepare Context/Analysis Section
-        analysis_card = dbc.Card([
-            dbc.CardHeader("RAG Analysis"),
-            dbc.CardBody([
-                html.Div([
-                    html.Strong("Rewritten Query: "),
-                    html.Span(task.rewritten_query if task.rewritten_query else "None", className="text-info")
-                ], className="mb-2 small"),
-                html.Strong("Retrieved Contexts:", className="small"),
-                render_contexts(task.contexts, task.task_id)
-            ])
-        ], className="mb-3 shadow-sm")
+        analysis_card = dbc.Card(
+            [
+                dbc.CardHeader("RAG Analysis"),
+                dbc.CardBody([
+                    html.Div(
+                        [
+                            html.Strong("Rewritten Query: "),
+                            html.Span(task.rewritten_query if task.rewritten_query else "None", className="text-info"),
+                        ], className="mb-2 small",
+                    ),
+                    html.Strong("Retrieved Contexts:", className="small"),
+                    render_contexts(task.contexts, task.task_id),
+                ]),
+            ], className="mb-3 shadow-sm",
+        )
 
         elements.append(
             dbc.Row([
-                dbc.Col([
-                    html.Div([
-                        html.Div(render_message_metadata(task), style=CHAT_STYLE["meta_box"]),
-                        html.Strong("Agent"),
-                        html.Div(task.target.text),
-                        # Embed the analysis inside or below the agent bubble?
-                        # Putting it below is cleaner for the "Chat" feel.
-                    ], style=CHAT_STYLE["agent"]),
+                dbc.Col(
+                    [
+                        html.Div(
+                            [
+                                html.Div(render_message_metadata(task), style=CHAT_STYLE["meta_box"]),
+                                html.Strong("Agent"),
+                                html.Div(task.target.text),
+                                # Embed the analysis inside or below the agent bubble?
+                                # Putting it below is cleaner for the "Chat" feel.
+                            ], style=CHAT_STYLE["agent"],
+                        ),
 
-                    # Context Accordion rendered below the agent response
-                    analysis_card
-                ], width=12)
-            ])
+                        # Context Accordion rendered below the agent response
+                        analysis_card,
+                    ], width=12,
+                ),
+            ]),
         )
 
         return html.Div(elements, className="mb-4")
 
     # --- Layout ---
 
-    app.layout = dbc.Container([
-        dbc.Row([
-            dbc.Col(html.H2("RAG Conversation Viewer"), width=12, className="my-3 text-center")
-        ]),
+    app.layout = dbc.Container(
+        [
+            dbc.Row([
+                dbc.Col(html.H2("RAG Conversation Viewer"), width=12, className="my-3 text-center"),
+            ]),
 
-        dbc.Row([
-            # --- Sidebar ---
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader("Filters"),
-                    dbc.CardBody([
-                        html.Label("Collection"),
-                        dcc.Dropdown(
-                            id='filter-collection',
-                            options=[{'label': c, 'value': c} for c in sorted(collection_options)],
-                            value=list(collection_options)[0] if collection_options else None
+            dbc.Row([
+                # --- Sidebar ---
+                dbc.Col(
+                    [
+                        dbc.Card(
+                            [
+                                dbc.CardHeader("Filters"),
+                                dbc.CardBody([
+                                    html.Label("Collection"),
+                                    dcc.Dropdown(
+                                        id='filter-collection',
+                                        options=[{'label': c, 'value': c} for c in sorted(collection_options)],
+                                        value=list(collection_options)[0] if collection_options else None,
+                                    ),
+                                    html.Br(),
+                                    html.Label("Conversations"),
+                                    dcc.Dropdown(
+                                        id='conversation-selector',
+                                        placeholder="Select ID...",
+                                        optionHeight=50,
+                                        # Options populated by callback
+                                    ),
+                                ]),
+                            ], className="mb-3",
                         ),
-                        html.Br(),
-                        html.Label("Conversations"),
-                        dcc.Dropdown(
-                            id='conversation-selector',
-                            placeholder="Select ID...",
-                            optionHeight=50
-                            # Options populated by callback
-                        )
-                    ])
-                ], className="mb-3"),
 
-                html.Div(id='conversation-stats', className="small text-muted")
-            ], width=3),
+                        html.Div(id='conversation-stats', className="small text-muted"),
+                    ], width=3,
+                ),
 
-            # --- Main Content ---
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader(html.Div(id='chat-header', children="Select a conversation")),
-                    dbc.CardBody(
-                        html.Div(id='chat-content', style={"height": "75vh", "overflowY": "scroll"})
-                    )
-                ])
-            ], width=9)
-        ])
-    ], fluid=True)
+                # --- Main Content ---
+                dbc.Col(
+                    [
+                        dbc.Card([
+                            dbc.CardHeader(html.Div(id='chat-header', children="Select a conversation")),
+                            dbc.CardBody(
+                                html.Div(id='chat-content', style={"height": "75vh", "overflowY": "scroll"}),
+                            ),
+                        ]),
+                    ], width=9,
+                ),
+            ]),
+        ], fluid=True,
+    )
 
     # --- Callbacks ---
 
     @app.callback(
-        [Output('conversation-selector', 'options'),
-         Output('conversation-selector', 'value')],
-        [Input('filter-collection', 'value')]
+        [
+            Output('conversation-selector', 'options'),
+            Output('conversation-selector', 'value'),
+        ],
+        [Input('filter-collection', 'value')],
     )
     def update_conversation_list(selected_collection):
         if not selected_collection:
@@ -244,10 +266,12 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
         return valid_ids, first_val
 
     @app.callback(
-        [Output('chat-content', 'children'),
-         Output('chat-header', 'children'),
-         Output('conversation-stats', 'children')],
-        [Input('conversation-selector', 'value')]
+        [
+            Output('chat-content', 'children'),
+            Output('chat-header', 'children'),
+            Output('conversation-stats', 'children'),
+        ],
+        [Input('conversation-selector', 'value')],
     )
     def render_conversation(conv_id):
         if not conv_id or conv_id not in conversations:
@@ -262,7 +286,7 @@ def run_dashboard(generation_tasks: List[GenerationTask]):
 
         header = html.Div([
             html.Span(f"ID: {conv_id}", className="fw-bold"),
-            dbc.Badge(tasks[0].dataset, color="light", text_color="dark", className="ms-2")
+            dbc.Badge(tasks[0].dataset, color="light", text_color="dark", className="ms-2"),
         ])
 
         # Stats for sidebar
