@@ -1,3 +1,5 @@
+# type: ignore
+
 import dataclasses
 from dash import Dash, html, dcc, Input, Output
 import plotly.graph_objects as go

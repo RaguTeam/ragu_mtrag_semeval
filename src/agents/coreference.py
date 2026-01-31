@@ -2,14 +2,14 @@
 
 from datetime import date
 
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
+
 from src.client.openai_compatible import LLM
 from src.shared.conversations import COREFERENCE_EXAMPLE
 from src.shared.prompts import COREFERENCE_RESOLUTION
 from src.shared.schemas import (
     ExtendedConversation,
-    ExtendedMessage,
-    OpenAIConversation,
-    OpenAIMessage,
+    OpenAIDocument,
     extended_to_openai,
 )
 
@@ -33,27 +33,26 @@ class CoreferenceAgent:
         """
         today = date.today().isoformat()  # e.g. 2026-01-22
 
-        user_mess_id = max(i for i, msg in enumerate(conversation.messages) if msg.role == "user")
+        user_mess_id = max(
+            i for i, msg in enumerate(conversation.messages)
+            if not isinstance(msg, OpenAIDocument) and msg['role'] == "user"
+        )
 
         until_last_query = conversation.messages[: user_mess_id + 1]
 
-        user_message_contents = str(OpenAIConversation(extended_to_openai(until_last_query)).to_openai())
+        user_message_contents = str(extended_to_openai(until_last_query))
         ready_to_llm = [
-            OpenAIMessage("user", user_message_contents),
+            ChatCompletionUserMessageParam(role="user", content=user_message_contents),
         ]
 
-        prompt = OpenAIConversation(
-            [
-                OpenAIMessage(
-                    "system",
-                    COREFERENCE_RESOLUTION.format(date=today),
-                ),
-            ]
-            + COREFERENCE_EXAMPLE
-            + ready_to_llm,
-        )
+        prompt = [
+            ChatCompletionSystemMessageParam(
+                role="system",
+                content=COREFERENCE_RESOLUTION.format(date=today),
+            ),
+        ] + COREFERENCE_EXAMPLE + ready_to_llm
 
         resolved_text = self.llm.generate(prompt)
-        conversation.messages[user_mess_id] = ExtendedMessage("user", resolved_text.strip())
+        conversation.messages[user_mess_id] = ChatCompletionUserMessageParam(role="user", content=resolved_text.strip())
 
         return conversation

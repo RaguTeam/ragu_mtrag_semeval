@@ -1,3 +1,5 @@
+# type: ignore
+
 import dash
 from dash import html, dcc, Input, Output, State, ALL, ctx
 import dash_bootstrap_components as dbc

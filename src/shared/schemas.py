@@ -1,58 +1,42 @@
 """Schemas for conversations and messages."""
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import cast
+
+from openai.types.chat import (
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam,
+)
 
 from src.shared.prompts import DOCUMENT_TEMPLATE
 
-ExtendedRole = Literal["system", "user", "assistant", "document"]
+
+OPENAI_MESSAGE = (
+    ChatCompletionSystemMessageParam
+    | ChatCompletionUserMessageParam
+    | ChatCompletionAssistantMessageParam
+    # | ChatCompletionDeveloperMessageParam
+    # | ChatCompletionToolMessageParam
+    # | ChatCompletionFunctionMessageParam
+)
 
 
 @dataclass(frozen=True)
-class ExtendedMessage:
-    """Extended message with document role."""
-
-    role: ExtendedRole
-    content: str
+class OpenAIDocument:
+    text: str
 
 
 @dataclass
 class ExtendedConversation:
     """Extended conversation with document messages."""
 
-    messages: list[ExtendedMessage]
-
-
-OpenAIRole = Literal["system", "user", "assistant"]
-
-
-@dataclass(frozen=True)
-class OpenAIMessage:
-    """OpenAI-style message."""
-
-    role: OpenAIRole
-    content: str
-
-
-@dataclass
-class OpenAIConversation:
-    """OpenAI-style conversation."""
-
-    messages: list[OpenAIMessage]
-
-    def to_openai(self) -> list[dict[str, str]]:
-        """Convert to list of dicts for OpenAI API.
-
-        Returns:
-            list[dict]: List of messages as dicts with 'role' and 'content' keys.
-
-        """
-        return [{"role": m.role, "content": m.content} for m in self.messages]
+    messages: list[OPENAI_MESSAGE | OpenAIDocument]
 
 
 def extended_to_openai(
-    messages: list[ExtendedMessage],
-) -> list[OpenAIMessage]:
+    messages: list[OPENAI_MESSAGE | OpenAIDocument],
+) -> list[OPENAI_MESSAGE]:
     """Convert ExtendedConversation messages to OpenAIConversation format.
 
     Args:
@@ -62,47 +46,49 @@ def extended_to_openai(
         list[OpenAIMessage]: Converted list of OpenAIMessage instances.
 
     """
-    openai_messages: list[OpenAIMessage] = []
+    openai_messages: list[OPENAI_MESSAGE] = []
 
-    pending_user: OpenAIMessage | None = None
+    pending_user: OPENAI_MESSAGE | None = None
+
 
     for msg in messages:
-        if msg.role == "user":
+        is_doc = isinstance(msg, OpenAIDocument)
+
+        if not is_doc and msg['role'] == "user":
             if pending_user is not None:
                 openai_messages.append(pending_user)
 
-            pending_user = OpenAIMessage(
+            pending_user = ChatCompletionUserMessageParam(
                 role="user",
-                content=msg.content,
+                content=msg['content'],
             )
 
-        elif msg.role == "document":
+        elif is_doc:
             if pending_user is None:
                 raise ValueError(
                     "Document message encountered without preceding user message",
                 )
 
-            pending_user = OpenAIMessage(
+            pending_user = ChatCompletionUserMessageParam(
                 role="user",
-                content=pending_user.content + DOCUMENT_TEMPLATE.format(content=msg.content),
+                content=(
+                    cast(str, pending_user['content'])
+                    + DOCUMENT_TEMPLATE.format(content=msg.text)
+                ),
             )
 
-        elif msg.role == "assistant":
+        elif not is_doc and msg['role'] == "assistant":
             if pending_user is not None:
                 openai_messages.append(pending_user)
                 pending_user = None
 
-            openai_messages.append(
-                OpenAIMessage(role="assistant", content=msg.content),
-            )
+            openai_messages.append(msg.copy())
 
-        elif msg.role == "system":
-            openai_messages.append(
-                OpenAIMessage(role="system", content=msg.content),
-            )
+        elif not is_doc and msg['role'] == "system":
+            openai_messages.append(msg.copy())
 
         else:
-            raise ValueError(f"Unsupported role: {msg.role}")
+            raise ValueError(f"Unsupported role: {msg['role']}")
 
     if pending_user is not None:
         openai_messages.append(pending_user)

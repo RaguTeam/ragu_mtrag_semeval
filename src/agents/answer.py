@@ -2,9 +2,11 @@
 
 from datetime import date
 
+from openai.types.chat import ChatCompletionSystemMessageParam
+
 from src.client.openai_compatible import LLM
 from src.shared.prompts import ANSWER_QUESTION
-from src.shared.schemas import ExtendedConversation, OpenAIConversation, OpenAIMessage, extended_to_openai
+from src.shared.schemas import ExtendedConversation, extended_to_openai
 
 
 class AnswerAgent:
@@ -28,11 +30,8 @@ class AnswerAgent:
 
         openai_conversation = extended_to_openai(conversation.messages)
 
-        prompt = OpenAIConversation(
-            [
-                OpenAIMessage("system", ANSWER_QUESTION.format(date=today)),
-            ]
-            + openai_conversation,
-        )
+        prompt = [
+            ChatCompletionSystemMessageParam(role="system", content=ANSWER_QUESTION.format(date=today)),
+        ] + openai_conversation
 
         return self.llm.generate(prompt)

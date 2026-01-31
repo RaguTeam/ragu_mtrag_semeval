@@ -440,6 +440,7 @@ def conversation_from_json(json_data: dict[str, Any]) -> Conversation:
 
 
 def generation_task_from_json(json_data: dict[str, Any]) -> GenerationTask:
+    json_data = copy.deepcopy(json_data)
     assert len(json_data["targets"]) == 1
     json_data["target"] = _generation_task_message_from_json(json_data.pop("targets")[0])
     json_data["input"] = [_generation_task_message_from_json(x) for x in json_data["input"]]

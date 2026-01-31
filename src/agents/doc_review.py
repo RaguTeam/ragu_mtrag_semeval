@@ -2,9 +2,15 @@
 
 from datetime import date
 
+from openai.types.chat import (
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+)
+
+from src.shared.schemas import OPENAI_MESSAGE
 from src.client.openai_compatible import LLM
 from src.shared.prompts import RELEVANCE_FILTERING
-from src.shared.schemas import ExtendedConversation, OpenAIConversation, OpenAIMessage
+from src.shared.schemas import ExtendedConversation, OpenAIDocument
 
 
 class RelevanceAgent:
@@ -24,20 +30,22 @@ class RelevanceAgent:
             str: List of messages with only relevant documents retained.
 
         """
-        today = date.today().isoformat()  # e.g. 2026-01-22
-        user_question = next(m.content for m in reversed(conversation.messages) if m.role == "user")
+        today = date.today().isoformat()
+        user_question = next(
+            m['content']
+            for m in reversed(conversation.messages)
+            if not isinstance(m, OpenAIDocument) and m['role'] == "user"
+        )
 
-        filtered_docs = []
-        context = [m for m in conversation.messages if m.role != "document"]
+        filtered_docs: list[OpenAIDocument] = []
+        context = [m for m in conversation.messages if not isinstance(m, OpenAIDocument)]
 
-        for doc in [m for m in conversation.messages if m.role == "document"]:
-            prompt = OpenAIConversation(
-                [
-                    OpenAIMessage("system", RELEVANCE_FILTERING.format(date=today)),
-                    OpenAIMessage("user", f"Question: {user_question}"),
-                    OpenAIMessage("user", f"Document: {doc.content}"),
-                ],
-            )
+        for doc in [m for m in conversation.messages if isinstance(m, OpenAIDocument)]:
+            prompt: list[OPENAI_MESSAGE] = [
+                ChatCompletionSystemMessageParam(role="system", content=RELEVANCE_FILTERING.format(date=today)),
+                ChatCompletionUserMessageParam(role="user", content=f"Question: {user_question}"),
+                ChatCompletionUserMessageParam(role="user", content=f"Document: {doc.text}"),
+            ]
             verdict = self.llm.generate(prompt).strip().lower()
 
             if verdict == "yes":
