@@ -27,26 +27,7 @@ def task_to_conversation(
         else:
             raise ValueError(f"Unknown speaker {m.speaker!r} in task_id={task.task_id}")
 
-    docs: list[OpenAIDocument] = []
-    for i, ctx in enumerate(task.contexts, start=1):
-        doc_id = getattr(ctx, "document_id", None)
-        title = getattr(ctx, "title", "") or ""
-        text = getattr(ctx, "text", "") or ""
-
-        doc_id_str = "" if doc_id is None else str(doc_id)
-
-        if doc_header:
-            header_bits: list[str] = []
-            if title:
-                header_bits.append(f"title={title}")
-            if doc_id_str:
-                header_bits.append(f"id={doc_id_str}")
-            header = f"Document {i}" + (f" ({', '.join(header_bits)})" if header_bits else "")
-            content = f"{header}:\n{text}"
-        else:
-            content = text
-
-        docs.append(OpenAIDocument(content))
+    docs = [OpenAIDocument(text=x.text) for x in task.contexts]
 
     return msgs, docs
 

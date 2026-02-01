@@ -6,9 +6,11 @@ from typing import cast
 
 import jsonlines
 
+from src.agents.answer import AnswerAgent
 from src.shared.conversations import task_to_conversation
 from src.client.openai_compatible import LLM
 from src.generation.assembly import MultiAgentQA
+from src.agents.coreference import CoreferenceAgent
 from src.data.utils import generation_task_from_json
 
 
@@ -21,8 +23,6 @@ if __name__ == "__main__":
     ap.add_argument("--model", default="Qwen/Qwen3-4B")
     ap.add_argument("--api_key", default="testkey")
     ap.add_argument("--max_examples", type=int, default=None)
-    ap.add_argument("--doc_header", action="store_true")
-    ap.add_argument("--no_coreference_resolution", action="store_true")
     args = ap.parse_args()
 
     tasks = [
@@ -45,7 +45,11 @@ if __name__ == "__main__":
         model=args.model,
         ensure_nonempty=True,
     )
-    qa = MultiAgentQA(llm, coreference_resolution=not args.no_coreference_resolution)
+    qa = MultiAgentQA(
+        llm,
+        coref_agent=CoreferenceAgent(llm),
+        answer_agent=AnswerAgent(llm),
+    )
 
     with open(args.output, 'a', encoding="utf-8", newline="\n") as fout:
         for task_idx, (task_json, task) in enumerate(tasks):
@@ -55,7 +59,7 @@ if __name__ == "__main__":
             if args.max_examples is not None and task_idx >= args.max_examples:
                 break
 
-            conv, docs = task_to_conversation(task, doc_header=args.doc_header)
+            conv, docs = task_to_conversation(task)
             pred = qa.run(conv, docs)
             task_json["predictions"] = [{"text": pred}]
             fout.write(json.dumps(task_json, ensure_ascii=False) + "\n")
