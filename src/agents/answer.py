@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 import copy
+from dataclasses import dataclass
 from datetime import date
 import re
 
@@ -27,7 +28,10 @@ def gemini_format_doc(doc_text: str):
     return doc_text
 
 
+@dataclass
 class GeminiDocQuestionFormatter:
+    add_rules: bool = True
+    
     def __call__(self, question: str, docs: list[OpenAIDocument]):
         sections: list[str] = [question]  # will be joined by \n\n
 
@@ -37,12 +41,13 @@ class GeminiDocQuestionFormatter:
         for doc in docs:
             sections.append(gemini_format_doc(doc.text))
             
-        sections.append(
-            'Answer according to the rules:'
-            '\n- Cite the document if appropriate, without quotes.'
-            '\n- Answer in no more than 7-8 sentences for wide questions, less for factual ones.'
-            '\n- Do not write "Based on the provided documents", just assume this.'
-        )
+        if self.add_rules:
+            sections.append(
+                'Answer according to the rules:'
+                '\n- Cite the document if appropriate, without quotes.'
+                '\n- Answer in no more than 7-8 sentences for wide questions, less for factual ones.'
+                '\n- Do not write "Based on the provided documents", just assume this.'
+            )
 
         sections.append(
             f'The question again: {question}'
