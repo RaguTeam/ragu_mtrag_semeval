@@ -6,7 +6,6 @@ import logging
 from src.agents.answer import AnswerAgent
 from src.agents.coreference import CoreferenceAgent
 from src.agents.doc_review import RelevanceAgent
-from src.client.openai_compatible import LLM
 from src.shared.logging_config import setup_logging
 from src.shared.schemas import OPENAI_MESSAGE, OpenAIDocument
 
@@ -22,7 +21,6 @@ class MultiAgentQA:
 
     def __init__(
         self,
-        llm: LLM,
         answer_agent: AnswerAgent,
         coref_agent: CoreferenceAgent | None = None,
         relevance_agent: RelevanceAgent | None = None,

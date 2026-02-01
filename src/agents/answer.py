@@ -18,6 +18,13 @@ class DefaultDocQuestionFormatter:
         for doc in docs:
             question += DOCUMENT_TEMPLATE.format(content=doc.text)
         return question
+    
+
+def gemini_format_doc(doc_text: str):
+    doc_text = doc_text.replace('\r', '')
+    doc_text = re.sub(r'\n[\n\s]+', '\n', doc_text).strip()
+    doc_text = f'<relevant document start>\n{doc_text}\n<relevant document end>'
+    return doc_text
 
 
 class GeminiDocQuestionFormatter:
@@ -28,11 +35,7 @@ class GeminiDocQuestionFormatter:
             sections.append('Answer based on the provided documents:')
 
         for doc in docs:
-            text = doc.text
-            text = text.replace('\r', '')
-            text = re.sub(r'\n[\n\s]+', '\n', text).strip()
-            text = f'<relevant document start>\n{text}\n<relevant document end>'
-            sections.append(text)
+            sections.append(gemini_format_doc(doc.text))
             
         sections.append(
             'Answer according to the rules:'

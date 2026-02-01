@@ -15,7 +15,6 @@ llm:
   
 qa:
   _target_: src.generation.assembly.MultiAgentQA
-  llm: ${llm}
   coref_agent:
     _target_: src.agents.coreference.CoreferenceAgent
     llm: ${llm}
