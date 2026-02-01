@@ -47,21 +47,6 @@ python scripts/generation/run_generation_task_b.py \
     input=$MTRAG_DATA/human/generation_tasks/reference.jsonl output=output.json
 ```
 
-Optionally you can additional args:
-
-```
-    ap.add_argument("--base_url", default="http://localhost:8001/v1")
-    ap.add_argument("--model", default="Qwen/Qwen3-4B")
-    ap.add_argument("--api_key", default="testkey")
-
-    ap.add_argument("--max_examples", type=int, default=None)
-    ap.add_argument("--start_idx", type=int, default=0)
-
-    ap.add_argument("--resume", action="store_true")
-    ap.add_argument("--doc_header", action="store_true")
-    ap.add_argument("--keep_error", action="store_true", help="If set, write prediction_error then stop (still stops).")
-```
-
 ## Evaluation
 
 After this you can git clone https://github.com/IBM/mt-rag-benchmark (or for now use fork where few arguments is fixed https://github.com/acssar/mt-rag-benchmark)
