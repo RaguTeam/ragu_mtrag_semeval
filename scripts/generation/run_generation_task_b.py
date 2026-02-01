@@ -13,7 +13,7 @@ from src.data.utils import generation_task_from_json
 from src.generation.assembly import MultiAgentQA
 
 
-@hydra.main(version_base=None, config_path="../../conf", config_name="default")
+@hydra.main(version_base=None, config_path="../../conf/generate", config_name="default")
 def main(cfg: DictConfig):
     tasks = [
         (data, generation_task_from_json(data))
