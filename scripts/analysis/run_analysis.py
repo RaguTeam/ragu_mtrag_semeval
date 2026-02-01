@@ -41,6 +41,7 @@ def main(cfg: DictConfig):
                 break
 
             conv, docs = task_to_conversation(task)
+            assert task.target
             title, prompt, model_name, answer = analyser.analyse(
                 conversation=conv,
                 reference_answer=task.target.text,

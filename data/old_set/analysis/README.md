@@ -13,3 +13,27 @@ python scripts/analysis/run_analysis.py \
     split_file=splits/test_1.json \
     --config-name self_improvement
 ```
+
+```
+python scripts/analysis/run_analysis.py \
+    input=$MTRAG_DATA/human/generation_tasks/reference.jsonl \
+    output=data/old_set/analysis/reference_validator.json \
+    split_file=splits/test_1.json \
+    --config-name reference_validator
+```
+
+```
+python scripts/analysis/run_analysis.py \
+    input=$MTRAG_DATA/human/generation_tasks/reference.jsonl \
+    output=data/old_set/analysis/reference_validator_gpt5.json \
+    split_file=splits/test_1.json \
+    --config-name reference_validator_gpt5
+```
+
+```
+python scripts/analysis/run_analysis.py \
+    input=$MTRAG_DATA/human/generation_tasks/reference.jsonl \
+    output=data/old_set/analysis/reference_validator_claude.json \
+    split_file=splits/test_1.json \
+    --config-name reference_validator_claude
+```

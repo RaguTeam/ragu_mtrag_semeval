@@ -48,7 +48,7 @@ Documents that the agent uses at the current turn:
 
 {documents}
 
-I remind the agent's answer: {answer}
+I remind the agent's answer: {reference_answer}
 
 Write a list of the agent's behavioral characteristics. How does it \
 handle wide, open, opinionated questions (cites the document? uses \
@@ -180,6 +180,64 @@ class SelfImprovementAnalyser(Analyser):
         return (
             'self_improvement',
             SELF_IMPROVEMENT_PROMPT,
+            self.llm.model,
+            response,
+        )
+
+
+REFERENCE_VALIDATOR_PROMPT = """\
+You are provided with a conversation between user and RAG agent. \
+Each turn agent answers based on the provided document fragments. \
+The document are provided only for the last question. The agent \
+reads these documents and tries to answer.
+
+Analyze the agent's answer on the last question.
+
+Conversation:
+
+{conversation}
+
+Documents that may be relevant to the last question:
+
+{documents}
+
+<end of documents section>
+
+The agent's answer: "{reference_answer}"
+
+Is the answer correct, or controversial, and why? \
+Given the provided documents, could there be other or better correct answers? \
+Can the answer be improved by using world knowledge beyond the provided documents?
+
+Answer in no more than 1-2 paragraphs or less.
+"""
+
+
+class ReferenceValidatorAnalyser(Analyser):
+    def __init__(self, llm: LLM):
+        self.llm = llm
+
+    def analyse(
+        self,
+        conversation: list[OPENAI_MESSAGE],
+        reference_answer: str,
+        docs: list[OpenAIDocument],
+        predicted_answer: str | None = None,
+        metrics: GenerationTaskMetrics | None = None,
+    ) -> tuple[str, str, str, str]:
+        prompt = REFERENCE_VALIDATOR_PROMPT.format(
+            conversation=pretty_print_conversation(conversation),
+            reference_answer=reference_answer,
+            documents='\n\n'.join(gemini_format_doc(doc.text) for doc in docs),
+        )
+        openai_messages: list[OPENAI_MESSAGE] = [
+            ChatCompletionSystemMessageParam(role='system', content=DEFAULT_VSEGPT_SYSTEM_PROMPT),
+            ChatCompletionUserMessageParam(role='user', content=prompt),
+        ]
+        response = self.llm.generate(openai_messages, think=True)
+        return (
+            'reference_validator',
+            REFERENCE_VALIDATOR_PROMPT,
             self.llm.model,
             response,
         )
