@@ -245,7 +245,7 @@ class AgentMessageContextForGenerationTask:
     # similar to AgentMessageContext, but in GenerationTask format
     document_id: int  # actually a passage ID
     text: str  # is this always the same as passsage.text for passage ID?
-    score: float  # what is this? a RAG score?
+    score: float | None = None  # what is this? a RAG score?
     source: str | None = None  # some unclear value
     query: dict[str, Any] | None = (
         None  # a query json in a format similar to RetrieverParameters.query_syntax (if RAG-retrieved)
@@ -312,6 +312,10 @@ class GenerationTask:
         "mt-rag-ibmcloud-elser-512-100-20240502",
         "mt-rag-fiqa-beir-elser-512-100-20240501",
         "mt-rag-clapnq-elser-512-100-20240503",
+        "fiqa",
+        "ibmcloud",
+        "clapnq",
+        "govt"
     ]
 
     answerability: Literal["ANSWERABLE", "CONVERSATIONAL", "PARTIAL", "UNANSWERABLE"]
@@ -336,11 +340,11 @@ class GenerationTask:
     for odd indices.
     """
 
-    target: GenerationTaskMessage
-    """A message to evaluate."""
-
     contexts: list[AgentMessageContextForGenerationTask]
     """Context used to generate .target message."""
+
+    target: GenerationTaskMessage | None = None
+    """A message to evaluate."""
 
     rewritten_query: str | None = None
     """Unclear field, looke like paraphrasing, not a co-reference resolution."""
@@ -373,6 +377,14 @@ class GenerationTask:
     predictions: list[GenerationTaskPrediction] | None = None
 
     metrics: GenerationTaskMetrics | None = None
+
+
+@dataclass
+class UnreferenceGenetionTask:
+    task_id: str
+    input: list[GenerationTaskMessage]
+    contexts: list[AgentMessageContextForGenerationTask] = field(default_factory=list)
+    prediction: str | None = None   
 
 
 ##### loading utils #####
@@ -441,13 +453,16 @@ def conversation_from_json(json_data: dict[str, Any]) -> Conversation:
 
 def generation_task_from_json(json_data: dict[str, Any]) -> GenerationTask:
     json_data = copy.deepcopy(json_data)
-    assert len(json_data["targets"]) == 1
-    json_data["target"] = _generation_task_message_from_json(json_data.pop("targets")[0])
+    targets = json_data.pop("targets", None)
+    if targets:        
+        assert len(targets) == 1
+        json_data["target"] = _generation_task_message_from_json(targets[0])
+
     json_data["input"] = [_generation_task_message_from_json(x) for x in json_data["input"]]
     json_data["contexts"] = [_agent_message_context_gen_from_json(x) for x in json_data["contexts"]]
-    json_data["question_type"] = json_data.pop("Question Type")
-    json_data["multi_turn"] = json_data.pop("Multi-Turn")
-    json_data["answerability"] = json_data.pop("Answerability")
+    json_data["question_type"] = json_data.pop("Question Type", None)
+    json_data["multi_turn"] = json_data.pop("Multi-Turn", None)
+    json_data["answerability"] = json_data.pop("Answerability", None)
     json_data["collection"] = json_data.pop("Collection")
     if "Standalone Type" in json_data:
         value = json_data.pop("Standalone Type")
