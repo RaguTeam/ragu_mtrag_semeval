@@ -44,8 +44,7 @@ To generate predictions use data in the format provided in [reference.jsonl](htt
 ```
 source .envrc
 python scripts/generation/run_generation_task_b.py \
-    --input $MTRAG_DATA/human/generation_tasks/reference.jsonl --output output.json \
-    --base_url $OPENAI_URL --api_key $OPENAI_KEY --model qwen/qwen3-14b
+    input=$MTRAG_DATA/human/generation_tasks/reference.jsonl output=output.json
 ```
 
 Optionally you can additional args:

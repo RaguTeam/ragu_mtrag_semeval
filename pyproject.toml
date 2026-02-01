@@ -8,6 +8,8 @@ dependencies = [
     "openai",
     "pre-commit>=4.5.1",
     "jsonlines",
+    "Cython",
+    "hydra-core",  # or fatal error: longintrepr.h: No such file or directory
 ]
 
 [project.optional-dependencies]
@@ -37,6 +39,8 @@ eval = [
     # flash-attn = ["torch"]
 ]
 
+[tool.uv.extra-build-dependencies]
+hydra = ["Cython"]
 
 [tool.ruff]
 line-length = 120
