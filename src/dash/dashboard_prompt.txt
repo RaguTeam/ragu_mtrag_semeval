@@ -1,0 +1,125 @@
+I need a Dash visualizer for RAG (inputs, contexts, predictions, metrics). My data format:
+
+```
+@dataclass
+class GenerationTaskAnalysis:
+    """A GenerationTask formatted for displaying and manual analysis."""
+    
+    task_id: str
+    """A unique ID for the task."""
+
+    dialog: str
+    """A previous conversation in human-readable way."""
+
+    documents: list[str]
+    """Documents in a human-readable way, without empty lines."""
+
+    reference: str
+    """The reference answer."""
+
+    answerability: Literal["ANSWERABLE", "CONVERSATIONAL", "PARTIAL", "UNANSWERABLE"]
+
+    multi_turn: Literal["Clarification", "Follow-up", "N/A"]
+
+    question_type: Literal[
+        "Comparative",
+        "Composite",
+        "Explanation",
+        "Factoid",
+        "How-To",
+        "Keyword",
+        "Non-Question",
+        "Opinion",
+        "Summarization",
+        "Troubleshooting",
+    ]
+
+    prediction: str | None = None
+    """The predicted answer."""
+
+    metrics: GenerationTaskMetrics | None = None
+
+    analysis: tuple[str, str, str, str] | None = None
+    """Optional field with additonal questions to LLM as judge. Each element
+    contains (title, prompt, model_name, answer), where prompt and answer can be
+    multi-line, and title is a short description of the prompt.
+    """
+
+@dataclass
+class GenerationTaskMetrics:
+    Recall: float
+    RougeL_stemFalse: float
+    BertscoreP: float
+    BertscoreR: float
+    Length: float
+    RB_agg: float
+    idk_eval: float
+    RL_F: float
+    RB_llm: float
+    RL_F_idk: float
+    RB_llm_idk: float
+    RB_agg_idk: float
+    BertKPrec: list[float] | None = None
+    Extractiveness_RougeL: list[float] | None = None
+```
+
+Specifically, I need **only a run_dashboard function with the required imports** (do not add the above dataclass defenitions and do not create a data to visualize).
+
+Input format:
+
+```
+def run_dashboard(
+    predictions: dict[str, list[GenerationTaskAnalysis]]
+):
+    """Run a dashboard to analyze how well an agent continues a dialog.
+
+    The `predictions` argument is a dict from model name (such as "qwen_7b") to
+    the list of `GenerationTaskAnalysis` that consists of the input data,
+    the prediction and the metrics.
+    """
+    ...
+```
+
+For example, I have 100 samples and run qwen_7b on the first 50 samples and
+gpt_4 on the first 90 samples. Then I would call:
+
+```
+run_dashboard({
+  'qwen_7b': <list of 50 samples>,
+  'gpt_4': <list of 90 samples>
+})
+```
+
+**The dashboard layout**
+
+1. Selectors (top, compact vertically).
+2. Plots (middle, compact vertically).
+3. Details (bottom).
+
+First, you need to take all the `.task_id` values found for all models and merge them into a single set, then convert to a list. We will refer to this list as `IDs`. The required selectors:
+
+- Task: to select one of the IDs. Should be printed in form f'#{i} ({id})', where `id` is the task id, and `i` is the position in the IDs. Thus, `i` is an incremental counter from 0 to `len(IDs)`.
+- Model: select one of the models we have, such as "qwen_7b".
+- Plot metric: select one of the metric names listed in `GenerationTaskMetrics` (only those which are float-valued and not list[float]) for plots.
+- Analysis: a combination of a title+model_name found in .analysis in at least one of the GenerationTaskAnalysis objects.
+
+**The dashboard callbacks**
+
+The layout should have only a single callback that processes the described selectors and fill "plots" and "details" areas.
+
+**1. How to fill "plots".** Here we aim to visualize the selected metric for all the data we have. A plot is a thin and wide image like plt.matshow or analog. The horizontal (long) axis is a task index (`i` in the task selector), and the vertical (typically short) axis is a model name. So, each cell is associated with a single `GenerationTaskAnalysis` object, or empty (if such task id is not given for the given model). The value in the cell is the "Plot metric" (from the selector) for that obect, or white (ef empty).
+
+**2. How to fill "details".** If the given model does NOT have the prediction for a given task, return. Otherwise, display the information from the corresponding `GenerationTaskAnalysis` object:
+
+- Task id, answerability, multi_turn, question_type in the header of the "details" block.
+- Dialog and reference in the left side.
+- Documents, prediction, analysis prompt and answer in the right side (if the given title+model_name exists in the current GenerationTaskAnalysis object.
+- Metrics in the footer.
+
+**Several important notes** about the dashboard:
+
+- Define styles in separate variables to make the layout code shorter.
+- Use python3.12 typing (i.e. `list` instead of `List`).
+- The layout need to be compact if possible.
+- When visualizing a .dialog, highlight "User:" and "Assistant:" substrings in bold.
+- Run with `app.run(debug=True, host='0.0.0.0', port=8051)`.
