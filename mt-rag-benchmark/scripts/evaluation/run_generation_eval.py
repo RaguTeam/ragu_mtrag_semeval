@@ -58,13 +58,20 @@ def args_parser():
         type=str, 
         help="OpenAI endpoint (required if provider=openai)"
     )
+    parser.add_argument(
+        "--eval_phase", 
+        action="store_true",
+        help="Evaluation phase means no target answers etc., will run IDK and RAGAS"
+    )
     return parser
 
 if __name__ == "__main__":
     parser = args_parser()
     args = parser.parse_args()
     
-    run_algorithmic_judges(args.evaluators, args.input, args.output)
+    if not args.eval_phase:
+        run_algorithmic_judges(args.evaluators, args.input, args.output)
+        
     
     if args.provider == "openai":
         if not args.openai_key or not args.azure_host:
@@ -82,13 +89,14 @@ if __name__ == "__main__":
     if args.provider == "openai":
         run_idk_judge(args.provider, "", args.output, args.output)
         run_ragas_judges_openai(args.output, args.output, args.openai_key, args.azure_host)
-        run_radbench_judge(args.provider, "", args.output, args.output)
+        if not args.eval_phase:
+            run_radbench_judge(args.provider, "", args.output, args.output)
+        get_idk_conditioned_metrics(args.output, args.output, args.eval_phase)
         
-        get_idk_conditioned_metrics(args.output, args.output)
     else:
         run_idk_judge(args.provider, args.judge_model, args.output, args.output, args.base_url, args.openai_key)
-        
         run_ragas_judges_local(args.provider, judge_model, args.output, args.output, args.base_url, args.openai_key)
-        run_radbench_judge(args.provider, judge_model, args.output, args.output, args.base_url, args.openai_key)
+        if not args.eval_phase:
+            run_radbench_judge(args.provider, judge_model, args.output, args.output, args.base_url, args.openai_key) 
+        get_idk_conditioned_metrics(args.output, args.output, args.eval_phase)
         
-        get_idk_conditioned_metrics(args.output, args.output)
