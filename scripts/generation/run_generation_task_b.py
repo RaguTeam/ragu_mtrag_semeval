@@ -40,8 +40,16 @@ def main(cfg: DictConfig):
             if cfg.max_examples is not None and task_idx >= cfg.max_examples:
                 break
 
-            conv, docs = task_to_conversation(task)
-            pred = qa.run(conv, docs)
+            if (
+                not task.contexts
+                and cfg.no_context_placeholder is not None
+            ):
+                pred = cast(str, cfg.no_context_placeholder)
+                print(f'Using placeholder "{pred}"')
+            else:
+                conv, docs = task_to_conversation(task)
+                pred = qa.run(conv, docs)
+            
             task_json["predictions"] = [{"text": pred}]
             fout.write(json.dumps(task_json, ensure_ascii=False) + "\n")
 

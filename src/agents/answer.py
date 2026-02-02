@@ -11,8 +11,6 @@ from openai.types.chat import ChatCompletionSystemMessageParam
 from src.client.openai_compatible import LLM
 from src.shared.prompts import (
     ANSWER_QUESTION,
-    ANSWER_NO_CONTEXT,
-    ANSWER_NO_CONTEXT_FEW_SHOTS,
     DOCUMENT_TEMPLATE,
 )
 from src.shared.schemas import OPENAI_MESSAGE, OpenAIDocument
@@ -92,31 +90,14 @@ class AnswerAgent:
         conversation = copy.deepcopy(conversation)
 
         assert conversation[-1]['role'] == 'user'
-
-        # insert documents
         question = conversation[-1]['content']
         assert isinstance(question, str)
 
-        # If we have docs, do normal RAG formatting. If docs are empty,
-        # we keep the plain question and switch to an "IDK" system prompt + few-shots.
-        if len(docs) > 0:
-            conversation[-1]['content'] = self.doc_formatter(question, docs)
-            system_prompt_text = self.sys_prompt.format(date=today)
-            messages: list[OPENAI_MESSAGE] = [
-                ChatCompletionSystemMessageParam(role="system", content=system_prompt_text),
-                *conversation,
-            ]
-            return self.llm.generate(messages)
+        conversation[-1]['content'] = self.doc_formatter(question, docs)
 
-        # Empty docs path: force a polite abstention that mentions the topic.
-        if len(docs) == 0:
-            system_prompt = ChatCompletionSystemMessageParam(
-                role="system",
-                content=ANSWER_NO_CONTEXT.format(date=today),
-            )
-
-            messages = [system_prompt]
-            messages.extend(ANSWER_NO_CONTEXT_FEW_SHOTS)
-            messages.extend(conversation)
-
-            return self.llm.generate(messages)
+        system_prompt_text = self.sys_prompt.format(date=today)
+        messages: list[OPENAI_MESSAGE] = [
+            ChatCompletionSystemMessageParam(role="system", content=system_prompt_text),
+            *conversation,
+        ]
+        return self.llm.generate(messages)
