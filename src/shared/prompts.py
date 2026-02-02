@@ -47,7 +47,7 @@ ANSWER_NO_CONTEXT = (
 )
 
 
-DOCUMENT_TEMPLATE = "\n\n[Document]\n{content}"
+DOCUMENT_TEMPLATE = "\n\n[DOCUMENT]\n{content}\n[END DOCUMENT]"
 
 
 COREFERENCE_EXAMPLE: list[OPENAI_MESSAGE] = [
