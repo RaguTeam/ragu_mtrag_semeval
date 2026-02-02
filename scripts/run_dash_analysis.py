@@ -1,4 +1,5 @@
-from itertools import chain
+import json
+from pathlib import Path
 import jsonlines
 
 from src.data.utils import GenerationTaskAnalysis, generation_task_from_json
@@ -10,28 +11,51 @@ def load_preds(path: str) -> list[GenerationTaskAnalysis]:
         for x in jsonlines.open(path) # type: ignore
     ]
 
+def load_analysis(path: str) -> dict[str, tuple[str, str, str, str]]:
+    return {
+        row['task_id']: (
+            row['analysis']['title'],
+            row['analysis']['prompt'],
+            row['analysis']['model_name'],
+            row['analysis']['answer'],
+        )
+        for row in jsonlines.open(path) # pyright: ignore[reportUnknownMemberType]
+    }
+
 preds = {
-    'meno_gte': load_preds(
-        'data/old_set/RAGU/test_answers_subsample_meno_gte.jsonl',
-    ),
-    'qwen_gte': load_preds(
-        'data/old_set/RAGU/test_answers_subsample_qwen_gte.jsonl',
-    ),
-    'meno_gte_new_prompt': load_preds(
-        'data/old_set/RAGU/test_answers_subsample_meno_gte_new_prompt.jsonl',
-    ),
-    'qwen3_4b_eval_by_gemma': load_preds(
-        'data/test_96/eval_qwen34b_coreference_test96.jsonl',
-    ),
-    'qwen3_8b_eval_by_gemma': load_preds(
-        'data/test_96/eval_qwen38b_coreference_test96.jsonl',
-    ),
-    # 'answers_subsample_result_2': load_preds(
-    #     'data/old_set/RAGU/answers_subsample_result_2.jsonl'
-    # ),
+    # gemini default prompt preds + metrics
+    'gemini1': load_preds('data/old_set/metrics/test_gemini-3-pro-preview-high.jsonl'),
+    # gemini new prompt preds + metrics
+    'gemini2': load_preds('data/old_set/metrics/test_gemini-3-pro-preview-high_new_prompt.jsonl'),
+    # gemini new prompt 2 preds + metrics
+    'gemini3': load_preds('data/old_set/metrics/test_gemini-3-pro-preview-high_new_prompt_2_test_1.jsonl'),
+    # qwen preds + metrics
+    'qwen3-32b-coref': load_preds('data/old_set/metrics/test_qwen332b_coreference_test96.jsonl'),
+    # ragu preds + metrics
+    'RAGU new doc view': load_preds('data/old_set/metrics/ragu_new_doc_view_meno_gte.jsonl'),
+    # lightRAG + gpt4.1mini preds + metrics
+    # 'lightRAG + gpt4.1-mini': load_preds('data/old_set/metrics/test_eval_lightrag_and_gpt41mini_test96.jsonl'),
 }
 
-for pred in chain(*preds.values()):
-    pred.analysis = [('q1', 'prompt_q1', 'gemini', 'answer1'), ('q2', 'prompt_q2', 'gemini', 'answer2')]
+analysis = [
+    load_analysis('data/old_set/analysis/agent_behaviour.json'),
+    load_analysis('data/old_set/analysis/reference_validator.json'),
+    load_analysis('data/old_set/analysis/reference_validator_gpt5.json'),
+    load_analysis('data/old_set/analysis/reference_validator_claude.json'),
+    load_analysis('data/old_set/analysis/self_improvement.json'),
+]
+
+task_ids = json.loads(Path('splits/test_1.json').read_text())
+
+for name, lst in list(preds.items()):
+    preds[name] = [task for task in lst if task.task_id in task_ids]
+
+for name, lst in list(preds.items()):
+    for task in lst:
+        task.analysis = [
+            analysis_dict[task.task_id]
+            for analysis_dict in analysis
+            if task.task_id in analysis_dict
+        ]
 
 run_dashboard(preds)

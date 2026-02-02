@@ -10,6 +10,7 @@ dependencies = [
     "jsonlines",
     "Cython",
     "hydra-core",  # or fatal error: longintrepr.h: No such file or directory
+    "dash",
 ]
 
 [project.optional-dependencies]

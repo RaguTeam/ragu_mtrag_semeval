@@ -75,7 +75,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
     STYLE_CONTROL_GROUP = {'display': 'flex', 'flexDirection': 'column', 'minWidth': '200px'}
     STYLE_LABEL = {'fontSize': '12px', 'fontWeight': 'bold', 'color': '#555', 'marginBottom': '2px'}
 
-    STYLE_PLOT_AREA = {'height': '20vh', 'minHeight': '150px', 'marginBottom': '10px', 'flexShrink': 0}
+    STYLE_PLOT_AREA = {'height': '16vh', 'minHeight': '150px', 'marginBottom': '10px', 'flexShrink': 0}
 
     # Details Area: Fills remaining space
     STYLE_DETAILS_AREA = {
@@ -132,7 +132,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
 
     # Right Bottom (Analysis): Flex 1
     STYLE_RIGHT_BOTTOM = {
-        'flex': '1',
+        'flex': '2',
         'overflowY': 'auto',
         'padding': '15px',
         'backgroundColor': '#fcfcfc',
@@ -227,7 +227,7 @@ def run_dashboard(predictions: dict[str, list[GenerationTaskAnalysis]]):
                     ),
                     html.Div(
                         style=STYLE_CONTROL_GROUP, children=[
-                            html.Label('Analysis Type', style=STYLE_LABEL),
+                            html.Label('Analysis Type', style=STYLE_LABEL | {'width': '500px'}),
                             dcc.Dropdown(
                                 id='sel-analysis', options=[{'label': a, 'value': a} for a in analysis_options],
                                 value=default_analysis, clearable=True, placeholder="Select analysis...",
