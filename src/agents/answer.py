@@ -9,9 +9,13 @@ import re
 from openai.types.chat import ChatCompletionSystemMessageParam
 
 from src.client.openai_compatible import LLM
-from src.shared.prompts import ANSWER_QUESTION, DOCUMENT_TEMPLATE
+from src.shared.prompts import (
+    ANSWER_QUESTION,
+    ANSWER_NO_CONTEXT,
+    ANSWER_NO_CONTEXT_FEW_SHOTS,
+    DOCUMENT_TEMPLATE,
+)
 from src.shared.schemas import OPENAI_MESSAGE, OpenAIDocument
-
 
 
 class DefaultDocQuestionFormatter:
@@ -19,7 +23,7 @@ class DefaultDocQuestionFormatter:
         for doc in docs:
             question += DOCUMENT_TEMPLATE.format(content=doc.text)
         return question
-    
+
 
 def gemini_format_doc(doc_text: str):
     doc_text = doc_text.replace('\r', '')
@@ -31,7 +35,7 @@ def gemini_format_doc(doc_text: str):
 @dataclass
 class GeminiDocQuestionFormatter:
     add_rules: bool = True
-    
+
     def __call__(self, question: str, docs: list[OpenAIDocument]):
         sections: list[str] = [question]  # will be joined by \n\n
 
@@ -40,17 +44,17 @@ class GeminiDocQuestionFormatter:
 
         for doc in docs:
             sections.append(gemini_format_doc(doc.text))
-            
+
         if self.add_rules:
             sections.append(
                 'Answer according to the rules:'
                 '\n- Cite the document if appropriate, without quotes.'
                 '\n- Answer in no more than 7-8 sentences for wide questions, less for factual ones.'
-                '\n- Do not write "Based on the provided documents", just assume this.'
+                '\n- Do not write "Based on the provided documents", just assume this.',
             )
 
         sections.append(
-            f'The question again: {question}'
+            f'The question again: {question}',
         )
 
         return '\n\n'.join(sections)
@@ -92,12 +96,27 @@ class AnswerAgent:
         # insert documents
         question = conversation[-1]['content']
         assert isinstance(question, str)
-        conversation[-1]['content'] = self.doc_formatter(question, docs)
 
-        # add system prompt
-        system_prompt = ChatCompletionSystemMessageParam(
-            role="system",
-            content=self.sys_prompt.format(date=today),
-        )
+        # If we have docs, do normal RAG formatting. If docs are empty,
+        # we keep the plain question and switch to an "IDK" system prompt + few-shots.
+        if len(docs) > 0:
+            conversation[-1]['content'] = self.doc_formatter(question, docs)
+            system_prompt_text = self.sys_prompt.format(date=today)
+            messages: list[OPENAI_MESSAGE] = [
+                ChatCompletionSystemMessageParam(role="system", content=system_prompt_text),
+                *conversation,
+            ]
+            return self.llm.generate(messages)
 
-        return self.llm.generate([system_prompt] + conversation)
+        # Empty docs path: force a polite abstention that mentions the topic.
+        if len(docs) == 0:
+            system_prompt = ChatCompletionSystemMessageParam(
+                role="system",
+                content=ANSWER_NO_CONTEXT.format(date=today),
+            )
+
+            messages = [system_prompt]
+            messages.extend(ANSWER_NO_CONTEXT_FEW_SHOTS)
+            messages.extend(conversation)
+
+            return self.llm.generate(messages)

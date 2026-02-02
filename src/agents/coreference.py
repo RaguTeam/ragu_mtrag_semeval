@@ -1,12 +1,12 @@
 """Agent for coreference resolution in conversations."""
 
 from datetime import date
+import json
 
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
-from src.shared.prompts import COREFERENCE_EXAMPLE
+from src.shared.prompts import COREFERENCE_EXAMPLE, COREFERENCE_RESOLUTION
 from src.client.openai_compatible import LLM
-from src.shared.prompts import COREFERENCE_RESOLUTION
 from src.shared.schemas import OPENAI_MESSAGE
 
 
@@ -37,7 +37,7 @@ class CoreferenceAgent:
             *COREFERENCE_EXAMPLE,
             ChatCompletionUserMessageParam(
                 role="user",
-                content=str(conversation),  # as json
+                content=json.dumps(conversation, ensure_ascii=False),
             ),
         ]
 
