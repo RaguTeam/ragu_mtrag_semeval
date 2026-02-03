@@ -3,6 +3,7 @@ defaults:
   - _self_
 llm:
   model: "google/gemini-3-pro-preview-high"
+  ensure_nonempty: false
 qa:
   coref_agent: null
   answer_agent:
