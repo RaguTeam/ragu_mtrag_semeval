@@ -263,18 +263,18 @@ class GenerationTaskPrediction:
 
 @dataclass
 class GenerationTaskMetrics:
-    Recall: float
-    RougeL_stemFalse: float
-    BertscoreP: float
-    BertscoreR: float
-    Length: float
-    RB_agg: float
-    idk_eval: float
-    RL_F: float
-    RB_llm: float
-    RL_F_idk: float
-    RB_llm_idk: float
-    RB_agg_idk: float
+    Recall: float | None = None
+    RougeL_stemFalse: float | None = None
+    BertscoreP: float | None = None
+    BertscoreR: float | None = None
+    Length: float | None = None
+    RB_agg: float | None = None
+    idk_eval: float | None = None
+    RL_F: float | None = None
+    RB_llm: float | None = None
+    RL_F_idk: float | None = None
+    RB_llm_idk: float | None = None
+    RB_agg_idk: float | None = None
     BertKPrec: list[float] | None = None
     Extractiveness_RougeL: list[float] | None = None
 
@@ -282,7 +282,7 @@ class GenerationTaskMetrics:
         # converts from 'idk_eval': [0.0] to 'idk_eval': 0.0
         for field in fields(self):
             value = getattr(self, field.name)
-            if isinstance(value, list) and field.type is float:
+            if isinstance(value, list) and field.name not in ('BertKPrec', 'Extractiveness_RougeL'):
                 setattr(self, field.name, value[0])
 
 
