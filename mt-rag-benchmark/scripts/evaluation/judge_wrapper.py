@@ -7,8 +7,8 @@ from ragas import evaluate, RunConfig
 from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
 from judge_utils import *
 
-from langchain.chat_models import AzureChatOpenAI
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.chat_models import AzureChatOpenAI
+from langchain_community.embeddings.openai import OpenAIEmbeddings
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
 from huggingface_client import HuggingFaceLLMClient

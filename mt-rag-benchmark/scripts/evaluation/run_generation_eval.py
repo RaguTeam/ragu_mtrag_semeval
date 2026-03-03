@@ -3,6 +3,12 @@ import os
 from judge_wrapper import *
 from run_algorithmic import run_algorithmic_judges
 
+os.environ["all_proxy"] = ""
+os.environ["socks_proxy"] = ""
+os.environ["http_proxy"] = ""
+os.environ["https_proxy"] = ""
+
+
 def args_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -84,8 +90,7 @@ if __name__ == "__main__":
             parser.error(f"--provider {args.provider} requires --judge_model")
 
         judge_model = args.judge_model
-    
-    
+   
     if args.provider == "openai":
         run_idk_judge(args.provider, "", args.output, args.output)
         run_ragas_judges_openai(args.output, args.output, args.openai_key, args.azure_host)
