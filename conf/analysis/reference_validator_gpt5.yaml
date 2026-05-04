@@ -1,0 +1,10 @@
+defaults:
+  - template
+  - _self_
+
+llm:
+  model: openai/gpt-5.2
+
+analyser:
+  _target_: src.analysis.analysers.ReferenceValidatorAnalyser
+  llm: ${llm}

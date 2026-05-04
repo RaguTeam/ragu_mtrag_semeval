@@ -1,0 +1,7 @@
+defaults:
+  - template
+  - _self_
+
+analyser:
+  _target_: src.analysis.analysers.ReferenceValidatorAnalyser
+  llm: ${llm}

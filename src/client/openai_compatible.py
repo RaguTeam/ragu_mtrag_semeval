@@ -1,10 +1,16 @@
 """OpenAI-compatible LLM client."""
 
+import json
+import os
+from pathlib import Path
 import re
+from datetime import datetime
+from typing import Any
 
 from openai import OpenAI
 
-from src.shared.schemas import OpenAIConversation
+from src.shared.schemas import OPENAI_MESSAGE
+from src.shared.conversations import pretty_print_conversation_using_tab
 
 
 class LLM:
@@ -26,6 +32,7 @@ class LLM:
         temperature: float = 0.0,
         max_tokens: int | None = None,
         timeout: float = 60.0,
+        ensure_nonempty: bool = True,
     ) -> None:
         """Initialize the LLM client.
 
@@ -46,8 +53,9 @@ class LLM:
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.ensure_nonempty = ensure_nonempty
 
-    def generate(self, messages: OpenAIConversation, response_format: dict | None = None, think: bool = False) -> str:
+    def generate(self, messages: list[OPENAI_MESSAGE], response_format: Any = None, think: bool = False) -> str:
         """Generate a completion from OpenAI-style messages.
 
         Args:
@@ -61,7 +69,7 @@ class LLM:
         """
         response = self.client.chat.completions.create(
             model=self.model,
-            messages=messages.to_openai(),
+            messages=messages,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
             extra_body={
@@ -73,7 +81,32 @@ class LLM:
         )
 
         raw_text = response.choices[0].message.content or ""
-        return self._strip_thinking(raw_text)
+        stripped_text = self._strip_thinking(raw_text)
+
+        if (log_to := os.environ.get('OPENAI_LOG_DIR', None)):
+            Path(log_to).mkdir(exist_ok=True, parents=True)
+            stem = datetime.now().strftime("%b %d, %Y %I:%M:%S %p")
+            Path(f'{log_to}/{stem} in.txt').write_text(
+                pretty_print_conversation_using_tab(messages), # type: ignore
+            )
+            Path(f'{log_to}/{stem} in.json').write_text(
+                json.dumps(messages, indent=4, ensure_ascii=False),
+            )
+            Path(f'{log_to}/{stem} think.txt').write_text(raw_text)
+            Path(f'{log_to}/{stem} out.txt').write_text(stripped_text)
+
+        if (
+            self.ensure_nonempty
+            and (stripped_text is None or stripped_text.strip() == "") # pyright: ignore[reportUnnecessaryComparison]
+        ):
+            raise RuntimeError(
+                "Empty model output detected. Stopping to avoid writing invalid predictions.\n"
+                f"base_url={self.client._base_url}\n" # pyright: ignore[reportPrivateUsage]
+                f"model={self.model}\n"
+                "Common causes: vLLM server not running, wrong base_url, model name mismatch, auth mismatch.",
+            )
+
+        return stripped_text
 
     def _strip_thinking(self, text: str) -> str:
         """Удаляет блоки <think>...</think> и возвращает финальный ответ модели."""
@@ -93,7 +126,7 @@ if __name__ == "__main__":
         model="Qwen/Qwen3-4B-FP8",
     )
 
-    messages = [
+    messages: list[OPENAI_MESSAGE] = [
         {"role": "system", "content": "You are RAGU, an AI assistant, that helps users."},
         {"role": "user", "content": "Who are you?"},
     ]
