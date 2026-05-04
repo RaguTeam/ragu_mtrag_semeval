@@ -1,0 +1,16 @@
+defaults:
+  - _self_
+
+llm:
+  _target_: src.client.openai_compatible.LLM
+  api_key: ${oc.env:OPENAI_KEY}
+  base_url: ${oc.env:OPENAI_URL}
+  model: google/gemini-3-pro-preview-high
+  ensure_nonempty: true
+
+input: ???
+output: ???
+split_file: null
+max_examples: null
+
+analyser: null

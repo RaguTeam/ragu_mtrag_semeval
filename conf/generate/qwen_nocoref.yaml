@@ -1,0 +1,7 @@
+defaults:
+  - vllm
+  - _self_
+llm:
+  model: "Qwen/Qwen3-4B"
+qa:
+  coref_agent: null

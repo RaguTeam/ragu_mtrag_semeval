@@ -1,0 +1,6 @@
+defaults:
+  - default
+  - _self_
+llm:
+  api_key: "testkey"
+  base_url: "http://localhost:8001/v1"

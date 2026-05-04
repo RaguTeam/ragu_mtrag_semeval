@@ -1,0 +1,10 @@
+defaults:
+  - template
+  - _self_
+
+llm:
+  ensure_nonempty: false
+
+analyser:
+  _target_: src.analysis.analysers.SelfImprovementAnalyser
+  llm: ${llm}

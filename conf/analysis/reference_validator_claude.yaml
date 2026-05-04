@@ -1,0 +1,10 @@
+defaults:
+  - template
+  - _self_
+
+llm:
+  model: anthropic/claude-opus-4.5-thinking
+
+analyser:
+  _target_: src.analysis.analysers.ReferenceValidatorAnalyser
+  llm: ${llm}

@@ -25,7 +25,7 @@ def setup_logging(
 
     """
     handlers = {}
-    root_handlers = []
+    root_handlers: list[str] = []
 
     if enable_console:
         handlers["console"] = {
@@ -51,7 +51,7 @@ def setup_logging(
         }
         root_handlers.append("file")
 
-    logging_config = {
+    logging_config = { # pyright: ignore[reportUnknownVariableType]
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
@@ -79,4 +79,4 @@ def setup_logging(
         },
     }
 
-    logging.config.dictConfig(logging_config)
+    logging.config.dictConfig(logging_config) # pyright: ignore[reportUnknownArgumentType]

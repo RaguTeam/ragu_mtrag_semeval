@@ -1,10 +1,17 @@
 import copy
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
+import re
 from typing import Any, Literal, Self
 
+from openai.types.chat import (
+    ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam,
+)
+
 from src import MTRAG_DATA
+from src.shared.conversations import pretty_print_conversation
 
 
 @dataclass
@@ -223,13 +230,22 @@ class GenerationTaskMessage:
     author_id: str
     created_at: int  # timestamp
 
+    def to_openai(self) -> ChatCompletionUserMessageParam | ChatCompletionAssistantMessageParam:
+        match self.speaker:
+            case 'agent':
+                return {'role': 'assistant', 'content': self.text}
+            case 'user':
+                return {'role': 'user', 'content': self.text}
+            case _:
+                raise ValueError('bad speaker field')
+
 
 @dataclass
 class AgentMessageContextForGenerationTask:
     # similar to AgentMessageContext, but in GenerationTask format
     document_id: int  # actually a passage ID
     text: str  # is this always the same as passsage.text for passage ID?
-    score: float  # what is this? a RAG score?
+    score: float | None = None  # what is this? a RAG score?
     source: str | None = None  # some unclear value
     query: dict[str, Any] | None = (
         None  # a query json in a format similar to RetrieverParameters.query_syntax (if RAG-retrieved)
@@ -243,6 +259,32 @@ class AgentMessageContextForGenerationTask:
 @dataclass
 class GenerationTaskPrediction:
     text: str
+
+
+@dataclass
+class GenerationTaskMetrics:
+    Recall: float | None = None
+    RougeL_stemFalse: float | None = None
+    BertscoreP: float | None = None
+    BertscoreR: float | None = None
+    Length: float | None = None
+    RB_agg: float | None = None
+    idk_eval: float | None = None
+    RL_F: float | None = None
+    RB_llm: float | None = None
+    RL_F_idk: float | None = None
+    RB_llm_idk: float | None = None
+    RB_agg_idk: float | None = None
+    BertKPrec: list[float] | None = None
+    Extractiveness_RougeL: list[float] | None = None
+
+    def __post_init__(self):
+        # converts from 'idk_eval': [0.0] to 'idk_eval': 0.0
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, list) and field.name not in ('BertKPrec', 'Extractiveness_RougeL'):
+                setattr(self, field.name, value[0])
+
 
 
 @dataclass
@@ -270,6 +312,10 @@ class GenerationTask:
         "mt-rag-ibmcloud-elser-512-100-20240502",
         "mt-rag-fiqa-beir-elser-512-100-20240501",
         "mt-rag-clapnq-elser-512-100-20240503",
+        "fiqa",
+        "ibmcloud",
+        "clapnq",
+        "govt"
     ]
 
     answerability: Literal["ANSWERABLE", "CONVERSATIONAL", "PARTIAL", "UNANSWERABLE"]
@@ -294,11 +340,11 @@ class GenerationTask:
     for odd indices.
     """
 
-    target: GenerationTaskMessage
-    """A message to evaluate."""
-
     contexts: list[AgentMessageContextForGenerationTask]
     """Context used to generate .target message."""
+
+    target: GenerationTaskMessage | None = None
+    """A message to evaluate."""
 
     rewritten_query: str | None = None
     """Unclear field, looke like paraphrasing, not a co-reference resolution."""
@@ -329,6 +375,16 @@ class GenerationTask:
     """
 
     predictions: list[GenerationTaskPrediction] | None = None
+
+    metrics: GenerationTaskMetrics | None = None
+
+
+@dataclass
+class UnreferenceGenetionTask:
+    task_id: str
+    input: list[GenerationTaskMessage]
+    contexts: list[AgentMessageContextForGenerationTask] = field(default_factory=list)
+    prediction: str | None = None   
 
 
 ##### loading utils #####
@@ -396,17 +452,25 @@ def conversation_from_json(json_data: dict[str, Any]) -> Conversation:
 
 
 def generation_task_from_json(json_data: dict[str, Any]) -> GenerationTask:
-    assert len(json_data["targets"]) == 1
-    json_data["target"] = _generation_task_message_from_json(json_data.pop("targets")[0])
+    json_data = copy.deepcopy(json_data)
+    targets = json_data.pop("targets", None)
+    if targets:        
+        assert len(targets) == 1
+        json_data["target"] = _generation_task_message_from_json(targets[0])
+
     json_data["input"] = [_generation_task_message_from_json(x) for x in json_data["input"]]
     json_data["contexts"] = [_agent_message_context_gen_from_json(x) for x in json_data["contexts"]]
-    json_data["question_type"] = json_data.pop("Question Type")
-    json_data["multi_turn"] = json_data.pop("Multi-Turn")
-    json_data["answerability"] = json_data.pop("Answerability")
+    json_data["question_type"] = json_data.pop("Question Type", None)
+    json_data["multi_turn"] = json_data.pop("Multi-Turn", None)
+    json_data["answerability"] = json_data.pop("Answerability", None)
     json_data["collection"] = json_data.pop("Collection")
     if "Standalone Type" in json_data:
-        assert len(json_data["Standalone Type"]) == 1
-        json_data["standalone_type"] = json_data.pop("Standalone Type")[0]
+        value = json_data.pop("Standalone Type")
+        if value is not None:
+            assert len(value) == 1
+            json_data["standalone_type"] = value[0]
+        else:
+            json_data["standalone_type"] = value
     if "Validity" in json_data:
         assert len(json_data["Validity"]) == 1
         json_data["validity"] = json_data.pop("Validity")[0]
@@ -414,6 +478,8 @@ def generation_task_from_json(json_data: dict[str, Any]) -> GenerationTask:
     json_data["n_references"] = json_data.pop("No. References", None)
     if "predictions" in json_data:
         json_data["predictions"] = [GenerationTaskPrediction(**x) for x in json_data["predictions"]]
+    if "metrics" in json_data:
+        json_data["metrics"] = GenerationTaskMetrics(**json_data["metrics"])
     return GenerationTask(**json_data)
 
 
@@ -467,3 +533,73 @@ def load_generation_tasks(
 
     """
     return [generation_task_from_json(json.loads(line)) for line in Path(path).read_text().strip().split("\n")]
+
+
+
+##### GenerationTask to GenerationTaskAnalysis #####
+
+@dataclass
+class GenerationTaskAnalysis:
+    """A GenerationTask formatted for displaying and manual analysis."""
+
+    task_id: str
+    """A unique ID for the task."""
+
+    dialog: str
+    """A previous conversation in human-readable way."""
+
+    documents: list[str]
+    """Documents in a human-readable way, without empty lines."""
+
+    reference: str
+    """The reference answer."""
+
+    answerability: Literal["ANSWERABLE", "CONVERSATIONAL", "PARTIAL", "UNANSWERABLE"]
+
+    multi_turn: Literal["Clarification", "Follow-up", "N/A"]
+
+    question_type: Literal[
+        "Comparative",
+        "Composite",
+        "Explanation",
+        "Factoid",
+        "How-To",
+        "Keyword",
+        "Non-Question",
+        "Opinion",
+        "Summarization",
+        "Troubleshooting",
+    ]
+
+    prediction: str | None = None
+    """The predicted answer."""
+
+    metrics: GenerationTaskMetrics | None = None
+
+    analysis: list[tuple[str, str, str, str]] | None = None
+    """Optional field with additonal questions to LLM as judge. Each element
+    contains (title, prompt, model_name, answer), where prompt and answer can be
+    multi-line, and title is a short description of the prompt.
+    """
+
+    @classmethod
+    def from_task(cls, task: GenerationTask) -> Self:
+        doc_texts_formatted = [
+            re.sub(r'\n[\n\s]+', '\n', doc.text.replace('\r', '').strip())
+            for doc in task.contexts
+        ]
+        return cls(
+            task_id=task.task_id,
+            dialog=pretty_print_conversation([x.to_openai() for x in task.input]),
+            documents=doc_texts_formatted,
+            reference=task.target.text,
+            prediction=(
+                task.predictions[0].text
+                if task.predictions is not None
+                else None
+            ),
+            metrics=task.metrics,
+            answerability=task.answerability,
+            multi_turn=task.multi_turn,
+            question_type=task.question_type,
+        )

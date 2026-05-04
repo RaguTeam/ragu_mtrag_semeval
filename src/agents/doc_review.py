@@ -2,9 +2,15 @@
 
 from datetime import date
 
+from openai.types.chat import (
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+)
+
+from src.shared.schemas import OPENAI_MESSAGE
 from src.client.openai_compatible import LLM
 from src.shared.prompts import RELEVANCE_FILTERING
-from src.shared.schemas import ExtendedConversation, OpenAIConversation, OpenAIMessage
+from src.shared.schemas import OpenAIDocument
 
 
 class RelevanceAgent:
@@ -14,33 +20,37 @@ class RelevanceAgent:
         """Initialize the RelevanceAgent."""
         self.llm = llm
 
-    def filter(self, conversation: ExtendedConversation) -> ExtendedConversation:
+    def filter(
+        self,
+        conversation: list[OPENAI_MESSAGE],
+        docs: list[OpenAIDocument],
+    ) -> list[int]:
         """Filter documents based on relevance to the user question.
 
         Args:
             conversation: List of messages in the conversation.
 
         Returns:
-            str: List of messages with only relevant documents retained.
+            str: Indices of relevant docs.
 
         """
-        today = date.today().isoformat()  # e.g. 2026-01-22
-        user_question = next(m.content for m in reversed(conversation.messages) if m.role == "user")
+        today = date.today().isoformat()
 
-        filtered_docs = []
-        context = [m for m in conversation.messages if m.role != "document"]
+        assert conversation[-1]['role'] == 'user'
+        user_question = conversation[-1]['content']
+        assert isinstance(user_question, str)
 
-        for doc in [m for m in conversation.messages if m.role == "document"]:
-            prompt = OpenAIConversation(
-                [
-                    OpenAIMessage("system", RELEVANCE_FILTERING.format(date=today)),
-                    OpenAIMessage("user", f"Question: {user_question}"),
-                    OpenAIMessage("user", f"Document: {doc.content}"),
-                ],
-            )
+        filtered_doc_idx: list[int] = []
+
+        for doc_idx, doc in enumerate(docs):
+            prompt: list[OPENAI_MESSAGE] = [
+                ChatCompletionSystemMessageParam(role="system", content=RELEVANCE_FILTERING.format(date=today)),
+                ChatCompletionUserMessageParam(role="user", content=f"Question: {user_question}"),
+                ChatCompletionUserMessageParam(role="user", content=f"Document: {doc.text}"),
+            ]
             verdict = self.llm.generate(prompt).strip().lower()
 
             if verdict == "yes":
-                filtered_docs.append(doc)
+                filtered_doc_idx.append(doc_idx)
 
-        return ExtendedConversation(context + filtered_docs)
+        return filtered_doc_idx

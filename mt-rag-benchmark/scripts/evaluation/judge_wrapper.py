@@ -7,8 +7,8 @@ from ragas import evaluate, RunConfig
 from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
 from judge_utils import *
 
-from langchain.chat_models import AzureChatOpenAI
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.chat_models import AzureChatOpenAI
+from langchain_community.embeddings.openai import OpenAIEmbeddings
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 
 from huggingface_client import HuggingFaceLLMClient
@@ -118,20 +118,23 @@ def get_idk_score(row, use_metric):
         return rl_f
     
     
-def get_idk_conditioned_metrics(input_file, output_file):
+def get_idk_conditioned_metrics(input_file, output_file, only_ragas=False):
     model_predictions = read_json_with_pandas(filepath=f"{input_file}")
 
     model_predictions['RL_F_idk'] = model_predictions.apply(get_idk_score, axis=1, use_metric = 'RL_F')
-    model_predictions['RB_llm_idk'] = model_predictions.apply(get_idk_score, axis=1, use_metric = 'RB_llm')
-    model_predictions['RB_agg_idk'] = model_predictions.apply(get_idk_score, axis=1, use_metric = 'RB_agg')
-    
+
     model_predictions['metrics'] = model_predictions.apply(lambda row: update_or_create_dict(row.get('metrics'), row['RL_F_idk'], 'RL_F_idk'), axis=1)
-    model_predictions['metrics'] = model_predictions.apply(lambda row: update_or_create_dict(row.get('metrics'), row['RB_llm_idk'], 'RB_llm_idk'), axis=1)
-    model_predictions['metrics'] = model_predictions.apply(lambda row: update_or_create_dict(row.get('metrics'), row['RB_agg_idk'], 'RB_agg_idk'), axis=1)
+    keys_to_remove = ["RL_F_idk"]
+    
+    if not only_ragas:
+        model_predictions['RB_llm_idk'] = model_predictions.apply(get_idk_score, axis=1, use_metric = 'RB_llm')
+        model_predictions['RB_agg_idk'] = model_predictions.apply(get_idk_score, axis=1, use_metric = 'RB_agg')
 
-    keys_to_remove = ["RL_F_idk", "RB_llm_idk", "RB_agg_idk"]
+        model_predictions['metrics'] = model_predictions.apply(lambda row: update_or_create_dict(row.get('metrics'), row['RB_llm_idk'], 'RB_llm_idk'), axis=1)
+        model_predictions['metrics'] = model_predictions.apply(lambda row: update_or_create_dict(row.get('metrics'), row['RB_agg_idk'], 'RB_agg_idk'), axis=1)
+        keys_to_remove += ["RB_llm_idk", "RB_agg_idk"]
+
     model_predictions = remove_keys_from_df(model_predictions, keys_to_remove)
-
     model_predictions.to_json(output_file, orient="records", lines=True)
 
 # ================================================

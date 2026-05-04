@@ -1,0 +1,10 @@
+defaults:
+  - default
+  - _self_
+llm:
+  model: "google/gemini-3-pro-preview-high"
+qa:
+  coref_agent: null
+  answer_agent:
+    doc_formatter:
+      _target_: src.agents.answer.GeminiDocQuestionFormatter
